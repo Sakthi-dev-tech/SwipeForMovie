@@ -1,14 +1,13 @@
-import { StatusBar } from "expo-status-bar";
-import { ImageBackground, SafeAreaView, StyleSheet, View, Animated, Text } from "react-native";
-import { COLOURS } from "../theme/theme";
+import { ImageBackground, SafeAreaView, StyleSheet, View, Animated } from "react-native";
+import { COLOURS } from "../../theme/theme";
 import Onboarding from 'react-native-onboarding-swiper'
 import LottieView from "lottie-react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useRef, useState } from "react";
-import { screenDimensions } from "../constants/screenDimensions";
+import { useRef } from "react";
+import { screenDimensions } from "../../constants/screenDimensions";
 
-export default function SplashScreen1() {
-  const navigation = useNavigation()
+
+export default function SplashScreen({navigation}) {
+
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const handleDone = () => {
@@ -16,7 +15,11 @@ export default function SplashScreen1() {
       toValue: 0,
       duration: 500,
       useNativeDriver: true, // For better performance
-    }).start(() => navigation.replace('SignUpScreen'));
+    }).start(() => {
+      navigation.replace('SignUpScreen', {
+        roundedContainerForStartingScreenHeightRatio: 0.65
+      })
+    });
   };
 
 
@@ -24,7 +27,7 @@ export default function SplashScreen1() {
   return (
     <SafeAreaView style={styles.container}>
       
-      <ImageBackground source={require('../assets/background.png')} style={styles.background}>
+      <ImageBackground source={require('../../assets/background.png')} style={styles.background}>
         <View style={styles.roundedContainer}>
           <Animated.View style={{flex: 1, opacity: fadeAnim}}>
             <Onboarding
@@ -45,7 +48,7 @@ export default function SplashScreen1() {
                       <LottieView
                         autoPlay
                         loop
-                        source={require('../assets/Lottie/MovieAnimation.json')}
+                        source={require('../../assets/Lottie/MovieAnimation.json')}
                         style={{ width: 150, height: 150 }}
                       />
                     </View>
@@ -60,7 +63,7 @@ export default function SplashScreen1() {
                       <LottieView
                         autoPlay
                         loop
-                        source={require('../assets/Lottie/ManReviewingAnimation.json')}
+                        source={require('../../assets/Lottie/ManReviewingAnimation.json')}
                         style={{ width: 200, height: 150 }}
                       />
                     </View>
@@ -75,7 +78,7 @@ export default function SplashScreen1() {
                       <LottieView
                         autoPlay
                         loop
-                        source={require('../assets/Lottie/WatchMovieAnimation.json')}
+                        source={require('../../assets/Lottie/WatchMovieAnimation.json')}
                         style={{ width: 200, height: 150 }}
                       />
                     </View>
@@ -102,10 +105,11 @@ const styles = StyleSheet.create({
   roundedContainer: {
     backgroundColor: COLOURS.secondary,
     width: '100%',
-    height: screenDimensions.screenHeight * 0.55,
+    height: screenDimensions.screenHeight * 0.65,
     borderTopStartRadius: 42,
     borderTopEndRadius: 42,
     overflow: 'hidden',
+    justifyContent: 'flex-start'
   },
 
   animation: {

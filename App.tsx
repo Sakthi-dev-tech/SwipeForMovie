@@ -14,14 +14,15 @@ export default function App() {
   useEffect(() => {
     Font.loadAsync({
       'Catamaran': require('./src/assets/fonts/Catamaran-VariableFont_wght.ttf'),
-      'Lato': require('./src/assets/fonts/Lato-Regular.ttf')
+      'Lato': require('./src/assets/fonts/Lato-Regular.ttf'),
+      'PlayFair': require('./src/assets/fonts/PlayfairDisplay-VariableFont_wght.ttf')
     }).then(() => isFontLoaded(true));
   }, []);
 
   if (fontLoaded) {
     return (
       <>
-        <StatusBar style='auto' />
+        <StatusBar style='auto' networkActivityIndicatorVisible={false}/>
         <NavigationContainer>
           <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>
             <Stack.Screen name='AuthNavigator' component={AuthNavigator} />
