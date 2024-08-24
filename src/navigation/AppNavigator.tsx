@@ -2,13 +2,15 @@ import React from 'react'
 import { View, Image } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import MovieRecommendationScreen from '../screens/AppScreens/MovieRecommendationScreen'
-import SettingScreen from '../screens/AppScreens/SettingScreen'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import { COLOURS } from '../theme/theme'
-import HomescreenNavigator from './HomescreenNavigator'
 import HomeScreen from '../screens/AppScreens/HomeScreen'
 import MovieDetailsScreen from '../screens/AppScreens/MovieDetailsScreen'
+import SearchScreen from '../screens/AppScreens/SearchScreen'
+import ProfileScreen from '../screens/AppScreens/ProfileScreens/ProfileScreen'
+import EditProfileScreen from '../screens/AppScreens/ProfileScreens/EditProfileScreen'
+import SettingsScreen from '../screens/AppScreens/ProfileScreens/SettingsScreen'
 
 const TabNavigator = createBottomTabNavigator()
 
@@ -26,7 +28,7 @@ const AppNavigator = () => {
                 left: 15,
                 right: 15,
                 borderRadius: 20,
-                backgroundColor: COLOURS.secondary
+                backgroundColor: COLOURS.secondary,
             },
         }}>
             <TabNavigator.Group>
@@ -39,16 +41,24 @@ const AppNavigator = () => {
                         ),
                     }}
                 />
-                <TabNavigator.Screen 
+                <TabNavigator.Screen
                     name='MovieDetails'
                     component={MovieDetailsScreen}
                     options={{
                         tabBarButton: () => null,
-                        tabBarStyle: {display: 'none'}
+                        tabBarStyle: { display: 'none' }
+                    }}
+                />
+                <TabNavigator.Screen
+                    name='SearchScreen'
+                    component={SearchScreen}
+                    options={{
+                        tabBarButton: () => null,
+                        tabBarStyle: { display: 'none' }
                     }}
                 />
             </TabNavigator.Group>
-            
+
             <TabNavigator.Screen
                 name='SuggestMe'
                 component={MovieRecommendationScreen}
@@ -80,15 +90,36 @@ const AppNavigator = () => {
 
                 }}
             />
-            <TabNavigator.Screen
-                name='Settings'
-                component={SettingScreen}
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <Ionicons name='person' size={iconSize} color={focused ? COLOURS.orange : 'black'} />
-                    )
-                }}
-            />
+
+            <TabNavigator.Group>
+                <TabNavigator.Screen
+                    name='Profile'
+                    component={ProfileScreen}
+                    options={{
+                        tabBarIcon: ({ focused }) => (
+                            <Ionicons name='person' size={iconSize} color={focused ? COLOURS.orange : 'black'} />
+                        )
+                    }}
+                />
+
+                <TabNavigator.Screen
+                    name='EditProfile'
+                    component={EditProfileScreen}
+                    options={{
+                        tabBarButton: () => null,
+                        tabBarStyle: { display: 'none' }
+                    }}
+                />
+
+                <TabNavigator.Screen
+                    name='EditSettings'
+                    component={SettingsScreen}
+                    options={{
+                        tabBarButton: () => null,
+                        tabBarStyle: { display: 'none' }
+                    }}
+                />
+            </TabNavigator.Group>
         </TabNavigator.Navigator>
     )
 }

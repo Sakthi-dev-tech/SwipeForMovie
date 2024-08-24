@@ -6,7 +6,7 @@ import {LinearGradient} from 'expo-linear-gradient'
 const PopularAndUpcomingMovieCard = (props) => {
     return (
         <View style={[styles.container, props.isFirst ? {marginLeft: 20}: props.isLast ? {marginRight: 20} : {}, {maxWidth: props.cardWidth}]}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={props.cardFunction}>
                 <Image style={[styles.moviePoster, {width: props.cardWidth}]} source={{ uri: props.imagePath }}></Image>
                 <LinearGradient 
                     style={styles.linearGradient}

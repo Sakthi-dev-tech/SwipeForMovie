@@ -26,7 +26,6 @@ export default function SplashScreen({navigation}) {
 
   return (
     <SafeAreaView style={styles.container}>
-      
       <ImageBackground source={require('../../assets/background.png')} style={styles.background}>
         <View style={styles.roundedContainer}>
           <Animated.View style={{flex: 1, opacity: fadeAnim}}>
@@ -99,7 +98,7 @@ const styles = StyleSheet.create({
 
   background: {
     flex: 1,
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
   },
 
   roundedContainer: {
