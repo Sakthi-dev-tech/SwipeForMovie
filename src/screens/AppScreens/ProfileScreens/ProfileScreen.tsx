@@ -113,6 +113,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Quicksand',
     color: COLOURS.secondary,
     fontSize: 15,
-    fontWeight: '500'
+    fontWeight: '600'
   }
 })

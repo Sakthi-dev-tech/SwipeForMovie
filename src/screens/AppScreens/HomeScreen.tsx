@@ -1,5 +1,5 @@
 import { Text, Animated, SafeAreaView, ImageBackground, TextInput, StyleSheet, ActivityIndicator, FlatList, View, Modal, TouchableOpacity } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import { COLOURS } from '../../theme/theme'
@@ -7,41 +7,45 @@ import { baseImagePath, movieDetails, nowPlayingMovies, popularMovies, upcomingM
 import PopularAndUpcomingMovieCard from '../../components/ForHomepage/PopularAndUpcomingMovieCard'
 import { screenDimensions } from '../../constants/screenDimensions'
 import NowPlayingMovieCard from '../../components/ForHomepage/NowPlayingMovieCard'
-
-const getNowPlayingMoviesList = async () => {
-    try {
-        let response = await fetch(nowPlayingMovies)
-        let json = await response.json();
-        return json
-    } catch (err) {
-        console.warn("Error while fetching now playing movies: ", err)
-    }
-}
-const getPopularMoviesList = async () => {
-    try {
-        let response = await fetch(popularMovies)
-        let json = await response.json();
-        return json
-    } catch (err) {
-        console.warn("Error while fetching popular movies: ", err)
-    }
-}
-const getUpcomingMoviesList = async () => {
-    try {
-        let response = await fetch(upcomingMovies)
-        let json = await response.json();
-        return json
-    } catch (err) {
-        console.warn("Error while upcoming movies: ", err)
-    }
-}
+import SettingsContext from '../../contexts/SettingsContext'
 
 const HomeScreen = ({ navigation }) => {
+
+    const { showAdultFilms } = useContext(SettingsContext)
 
     const [nowPlayingMoviesList, setNowPlayingMoviesList] = useState<any>(undefined)
     const [popularMoviesList, setPopularMoviesList] = useState<any>(undefined)
     const [upcomingMoviesList, setUpcomingMoviesList] = useState<any>(undefined)
     const [searchQuery, setSearchQuery] = useState<string>('')
+
+    const getNowPlayingMoviesList = async () => {
+
+        try {
+            let response = await fetch(`${nowPlayingMovies}&include_adult=${showAdultFilms}`)
+            let json = await response.json();
+            return json
+        } catch (err) {
+            console.warn("Error while fetching now playing movies: ", err)
+        }
+    }
+    const getPopularMoviesList = async () => {
+        try {
+            let response = await fetch(`${popularMovies}&include_adult=${showAdultFilms}`)
+            let json = await response.json();
+            return json
+        } catch (err) {
+            console.warn("Error while fetching popular movies: ", err)
+        }
+    }
+    const getUpcomingMoviesList = async () => {
+        try {
+            let response = await fetch(`${upcomingMovies}&include_adult=${showAdultFilms}`)
+            let json = await response.json();
+            return json
+        } catch (err) {
+            console.warn("Error while upcoming movies: ", err)
+        }
+    }
 
     useEffect(() => {
         const fetchMovies = async () => {
@@ -191,7 +195,12 @@ const HomeScreen = ({ navigation }) => {
                                 title={item.original_title}
                                 imagePath={baseImagePath("w185", item.poster_path)}
                                 cardFunction={() => {
-                                    navigation.navigate('MovieDetails', { movieID: item.id })
+                                    navigation.navigate('MovieDetails', { 
+                                        movieID: item.id,
+                                        fromSearchScreen: false,
+                                        backdropPath: baseImagePath("w780", item.backdrop_path),
+                                        posterPath: baseImagePath("w500", item.poster_path)
+                                    })
                                 }}
                             />}
                         />

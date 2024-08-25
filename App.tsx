@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 import * as Font from 'expo-font'
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import SettingsContext from './src/contexts/SettingsContext';
 
 const Stack = createStackNavigator();
 
 export default function App() {
 
   const [fontLoaded, isFontLoaded] = useState(false)
+  const [showAdultFilms, setShowAdultFilms] = useState(true)
 
   useEffect(() => {
     Font.loadAsync({
@@ -27,12 +29,14 @@ export default function App() {
   if (fontLoaded) {
     return (
       <SafeAreaProvider>
-        <StatusBar style='auto' networkActivityIndicatorVisible={false} />
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>
-            <Stack.Screen name='AuthNavigator' component={AuthNavigator} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <SettingsContext.Provider value={{ showAdultFilms, setShowAdultFilms }}>
+          <StatusBar style='auto' networkActivityIndicatorVisible={false} />
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>
+              <Stack.Screen name='AuthNavigator' component={AuthNavigator} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </SettingsContext.Provider>
       </SafeAreaProvider>
     );
   }

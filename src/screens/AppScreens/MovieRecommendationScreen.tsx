@@ -70,41 +70,51 @@ const sampleMovieData = [
   },
 ]
 const MovieRecommendationScreen = (props) => {
-  const [index, setIndex] = useState(0)
+  const [currCardindex, setCurrCardIndex] = useState(0)
+  const [nextCardIndex, setNextCardIndex] = useState(1)
 
   const hiddenTranslateX = screenDimensions.screenWidth * 2
-  const VELOCITY = 800
+  const VELOCITY_LIMIT = 2000
 
   const translationX = useSharedValue(0);
   const rotateDeg = useDerivedValue(() => interpolate(
     translationX.value,
-    [-screenDimensions.screenWidth, 0, screenDimensions.screenWidth],
-    [-60, 0, 60]
+    [-hiddenTranslateX, 0, hiddenTranslateX],
+    [-75, 0, 75]
   ));
+
+  function changeCard() {
+    translationX.value = 0
+    setCurrCardIndex(nextCardIndex)
+    if (nextCardIndex + 1 >= sampleMovieData.length) {
+      setNextCardIndex(Infinity)
+    } else {
+      setNextCardIndex(nextCardIndex + 1)
+    }
+  }
 
   const pan = Gesture.Pan()
     .onChange((event) => {
-      translationX.value = event.translationX
+      translationX.value = withSpring(event.translationX)
 
     }).onEnd((event) => {
-      if (Math.abs(event.velocityX) < 800){
-        translationX.value = 0
+      if (Math.abs(event.velocityX) < VELOCITY_LIMIT) {
+        translationX.value = withSpring(0)
         return;
-      } 
-
-      if (event.velocityX > 0){
-        // swipe right
-        translationX.value = hiddenTranslateX
-      } else {
-        // swipe left
-        translationX.value = -hiddenTranslateX
       }
+
+      translationX.value = withSpring(
+        hiddenTranslateX * Math.sign(event.velocityX),
+        {duration: 0},
+        () => runOnJS(changeCard)()
+      )
+
 
     });
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateX: withSpring(translationX.value) },
+      { translateX: translationX.value },
       { rotate: withSpring(`${rotateDeg.value}deg`) }
     ]
   }))
@@ -133,22 +143,34 @@ const MovieRecommendationScreen = (props) => {
         <Text style={styles.header}>Suggest Me</Text>
 
         <View style={styles.movieCards}>
-
-          <Animated.View style={[styles.nextMovieCard, nextCardStyle]}>
-            <Image source={{ uri: baseImagePath("w500", sampleMovieData[index + 1].poster_path) }} style={styles.movieCardPoster} />
-            <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,100)']} style={{ position: 'absolute', width: '100%', height: '100%', justifyContent: 'flex-end' }}>
-                <Text style={styles.movieTitle}>{sampleMovieData[index + 1].original_title}</Text>
-            </LinearGradient>
-          </Animated.View>
-
-          <GestureDetector gesture={pan}>
-            <Animated.View style={[styles.movieCard, cardStyle]}>
-              <Image source={{ uri: baseImagePath("w500", sampleMovieData[index].poster_path) }} style={styles.movieCardPoster} />
-              <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,100)']} style={{ position: 'absolute', width: '100%', height: '100%', justifyContent: 'flex-end' }}>
-                <Text style={styles.movieTitle}>{sampleMovieData[index].original_title}</Text>
+          {nextCardIndex !== Infinity ? (
+            <Animated.View style={[styles.nextMovieCard, nextCardStyle]}>
+              <Image source={{ uri: baseImagePath("w500", sampleMovieData[nextCardIndex].poster_path) }} style={styles.movieCardPoster} />
+              <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0, 0.85)', 'rgba(0,0,0,1)']} style={{ position: 'absolute', width: '100%', height: '100%', justifyContent: 'flex-end' }}>
+                <Text style={styles.movieTitle}>{sampleMovieData[nextCardIndex].original_title}</Text>
+                <Text style={styles.movieOverview}>{sampleMovieData[currCardindex].overview}</Text>
               </LinearGradient>
             </Animated.View>
-          </GestureDetector>
+          ) : (
+            <View />
+          )}
+          {
+            currCardindex !== Infinity ? (
+              <GestureDetector gesture={pan}>
+                <Animated.View style={[styles.movieCard, cardStyle]}>
+                  <Image source={{ uri: baseImagePath("w500", sampleMovieData[currCardindex].poster_path) }} style={styles.movieCardPoster} />
+                  <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0, 0.85)', 'rgba(0,0,0,1)']} style={{ position: 'absolute', width: '100%', height: '100%', justifyContent: 'flex-end' }}>
+                    <Text style={styles.movieTitle}>{sampleMovieData[currCardindex].original_title}</Text>
+                    <Text style={styles.movieOverview}>{sampleMovieData[currCardindex].overview}</Text>
+                  </LinearGradient>
+                </Animated.View>
+              </GestureDetector>
+            ) : (
+              <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: 'white', fontFamily: "PoppinsBold" }}>No more movies to recommend! Sorry!</Text>
+              </View>
+            )
+          }
 
         </View>
       </ImageBackground>
@@ -162,10 +184,10 @@ export default MovieRecommendationScreen
 const styles = StyleSheet.create({
   header: {
     alignSelf: 'center',
-    fontSize: 30,
-    fontFamily: 'Catamaran',
+    fontSize: 35,
+    fontFamily: 'PoppinsBold',
     color: 'white',
-    paddingTop: screenDimensions.StatusBarHeight + 5
+    paddingTop: screenDimensions.StatusBarHeight + 10
   },
 
   movieCards: {
@@ -190,9 +212,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
 
-  movieTitle:{
+  movieTitle: {
     color: 'white',
     margin: 10,
     fontFamily: 'PoppinsBold'
+  },
+
+  movieOverview: {
+    color: 'white',
+    marginLeft: 10,
+    marginBottom: 10,
+    fontFamily: 'Poppins',
+    fontSize: 12
   }
 })

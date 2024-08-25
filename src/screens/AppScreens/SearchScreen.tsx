@@ -1,5 +1,5 @@
 import { Animated, FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { ImageBackground } from 'react-native'
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import { COLOURS } from '../../theme/theme'
@@ -7,8 +7,11 @@ import { screenDimensions } from '../../constants/screenDimensions'
 import { useIsFocused } from '@react-navigation/native'
 import { baseImagePath, searchMovies } from '../../api/MovieAPICall'
 import SearchCard from '../../components/ForHomepage/ForSearchScreen/SearchCard'
+import SettingsContext from '../../contexts/SettingsContext'
 
 const SearchScreen = ({navigation}) => {
+
+    const { showAdultFilms } = useContext(SettingsContext)
 
     const searchBarBorderWidth = useRef(new Animated.Value(0)).current
     const searchIconTranslateX = useRef(new Animated.Value(0)).current
@@ -69,7 +72,7 @@ const SearchScreen = ({navigation}) => {
       async function handleSearch(text) {
         flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
         setQuery(text)
-        const results = await fetch(searchMovies(text))
+        const results = await fetch(`${searchMovies(text)}&include_adult=${showAdultFilms}`)
         await results.json().then((response) => {
             setResults(response.results)
         })
