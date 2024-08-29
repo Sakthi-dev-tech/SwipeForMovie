@@ -121,7 +121,7 @@ const SearchScreen = ({navigation}) => {
                                                 fromSearchScreen: true,
                                                 movieID: item.id,
                                                 backdropPath: baseImagePath("w500",item.backdrop_path),
-                                                posterPath: baseImagePath("w300", item.poster_path)
+                                                posterPath: baseImagePath("w800", item.poster_path)
                                             })
                                         }}
                                     />

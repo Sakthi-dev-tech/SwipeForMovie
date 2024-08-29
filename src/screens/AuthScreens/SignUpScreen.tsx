@@ -29,7 +29,7 @@ export default function SignUpScreen({ navigation, route }) {
 
     function handleNavToSignInPage() {
         navigation.replace("SignInScreen", {
-            roundedContainerForStartingScreenHeightRatio: 0.80
+            roundedContainerForStartingScreenHeightRatio: 0.75
         })
     }
 
@@ -39,7 +39,7 @@ export default function SignUpScreen({ navigation, route }) {
 
     useEffect(() => {
         Animated.timing(animatedHeight, {
-            toValue: screenDimensions.screenHeight * 0.80,
+            toValue: screenDimensions.screenHeight * 0.75,
             duration: 500,
             useNativeDriver: false
         }).start(() => {

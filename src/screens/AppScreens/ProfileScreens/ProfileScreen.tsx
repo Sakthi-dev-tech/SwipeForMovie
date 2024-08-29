@@ -8,6 +8,10 @@ const ProfileScreen = ({navigation}) => {
 
   const [profileImgURI, setProfileImgURI] = useState<string>('')
 
+  function handleSignOut() {
+    navigation.replace("SignInScreen")
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ImageBackground style={{ flex: 1, alignItems: 'center' }} source={require('../../../assets/background.png')}>
@@ -48,8 +52,9 @@ const ProfileScreen = ({navigation}) => {
           <View style={{marginRight: 10}}>
             <FontAwesome name='chevron-right' size={20} color={'white'} />
           </View>
-
         </TouchableOpacity>
+
+        <Text style={styles.signOutText} onPress={() => handleSignOut()}>Sign Out</Text>
       </ImageBackground>
     </SafeAreaView>
   )
@@ -114,5 +119,12 @@ const styles = StyleSheet.create({
     color: COLOURS.secondary,
     fontSize: 15,
     fontWeight: '600'
+  },
+
+  signOutText:{
+    color: COLOURS.red,
+    fontSize: 20,
+    fontFamily: 'Poppins',
+    marginTop: 20
   }
 })

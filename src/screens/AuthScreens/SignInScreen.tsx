@@ -17,7 +17,7 @@ export default function SignInScreen({ navigation, route }) {
 
     useEffect(() => {
         Animated.timing(animatedHeight, {
-            toValue: screenDimensions.screenHeight * 0.55,
+            toValue: screenDimensions.screenHeight * 0.50,
             duration: 500,
             useNativeDriver: false
         }).start(() => {
@@ -41,7 +41,7 @@ export default function SignInScreen({ navigation, route }) {
 
     function handleNavToSignUp() {
         navigation.replace('SignUpScreen', {
-            roundedContainerForStartingScreenHeightRatio: 0.55
+            roundedContainerForStartingScreenHeightRatio: 0.50
         })
     }
 

@@ -1,5 +1,5 @@
 import { Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ImageBackground } from 'react-native'
 import { COLOURS } from '../../../theme/theme'
 import { screenDimensions } from '../../../constants/screenDimensions'
@@ -7,6 +7,7 @@ import Entypo from 'react-native-vector-icons/Entypo'
 
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import { Modal } from 'react-native'
+import DeleteAccountModal from '../../../components/ForProfilePage/DeleteAccountModal'
 
 const EditProfileScreen = ({ navigation }) => {
 
@@ -14,6 +15,7 @@ const EditProfileScreen = ({ navigation }) => {
   const [username, setUsername] = useState<string | undefined>(undefined)
   const [password, setPassword] = useState<string | undefined>(undefined)
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState<boolean>(false)
+  const [showDeleteAccModal, setShowDeleteAccModal] = useState<boolean>(false)
 
   function handleChangeAvatar() {
 
@@ -146,6 +148,16 @@ const EditProfileScreen = ({ navigation }) => {
           </View>
         </Modal>
 
+        <Text 
+        style={styles.deleteAccountText}
+        onPress={() => setShowDeleteAccModal(true)}
+        >Delete Account</Text>
+
+        <DeleteAccountModal 
+          showModal={showDeleteAccModal}
+          setShowModal={setShowDeleteAccModal}
+        />
+
       </ImageBackground>
     </SafeAreaView>
   )
@@ -207,5 +219,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 1)',
     alignItems: 'center'
+  },
+
+  deleteAccountText: {
+    color: COLOURS.red,
+    fontSize: 20,
+    fontFamily: 'Poppins'
   }
 })

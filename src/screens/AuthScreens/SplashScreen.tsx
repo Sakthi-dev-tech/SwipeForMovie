@@ -4,6 +4,7 @@ import Onboarding from 'react-native-onboarding-swiper'
 import LottieView from "lottie-react-native";
 import { useRef } from "react";
 import { screenDimensions } from "../../constants/screenDimensions";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 export default function SplashScreen({navigation}) {
@@ -16,6 +17,7 @@ export default function SplashScreen({navigation}) {
       duration: 500,
       useNativeDriver: true, // For better performance
     }).start(() => {
+      AsyncStorage.setItem("hasLaunced", 'true')
       navigation.replace('SignUpScreen', {
         roundedContainerForStartingScreenHeightRatio: 0.65
       })

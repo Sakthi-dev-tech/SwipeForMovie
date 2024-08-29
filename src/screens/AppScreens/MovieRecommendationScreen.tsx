@@ -1,11 +1,12 @@
 import { View, Text, SafeAreaView, ImageBackground, Image, StyleSheet } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { screenDimensions } from '../../constants/screenDimensions'
 import { COLOURS } from '../../theme/theme'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, { interpolate, ReduceMotion, runOnJS, useAnimatedStyle, useDerivedValue, useSharedValue, withSpring } from 'react-native-reanimated'
 import { baseImagePath } from '../../api/MovieAPICall'
 import { LinearGradient } from 'expo-linear-gradient'
+import Fontisto from 'react-native-vector-icons/Fontisto'
 
 const sampleMovieData = [
   {
@@ -74,7 +75,7 @@ const MovieRecommendationScreen = (props) => {
   const [nextCardIndex, setNextCardIndex] = useState(1)
 
   const hiddenTranslateX = screenDimensions.screenWidth * 2
-  const VELOCITY_LIMIT = 2000
+  const VELOCITY_LIMIT = 800
 
   const translationX = useSharedValue(0);
   const rotateDeg = useDerivedValue(() => interpolate(
@@ -93,6 +94,13 @@ const MovieRecommendationScreen = (props) => {
     }
   }
 
+  useEffect(() => {
+    if (currCardindex === Infinity){
+      setCurrCardIndex(0)
+      setNextCardIndex(1)
+    }
+  }, [currCardindex])
+
   const pan = Gesture.Pan()
     .onChange((event) => {
       translationX.value = withSpring(event.translationX)
@@ -105,7 +113,7 @@ const MovieRecommendationScreen = (props) => {
 
       translationX.value = withSpring(
         hiddenTranslateX * Math.sign(event.velocityX),
-        {duration: 0},
+        { duration: 50 },
         () => runOnJS(changeCard)()
       )
 
@@ -136,6 +144,50 @@ const MovieRecommendationScreen = (props) => {
     ]
   }))
 
+  const likeAnimation = useAnimatedStyle(() => ({
+    opacity: withSpring(interpolate(
+      translationX.value,
+      [-hiddenTranslateX, 0, screenDimensions.screenWidth],
+      [0.5, 0.5, 1]
+    )),
+
+    transform: [
+      {translateX: withSpring(interpolate(
+        translationX.value,
+        [-hiddenTranslateX, 0, screenDimensions.screenWidth],
+        [ 0.95 * screenDimensions.screenWidth + 30, 0.95 * screenDimensions.screenWidth + 30 , 0.3 * screenDimensions.screenWidth + 30]
+      ))},
+
+      {scale: withSpring(interpolate(
+        translationX.value,
+        [-hiddenTranslateX, 0, screenDimensions.screenWidth],
+        [1, 1, 2.0]
+      ))}
+    ]
+  }))
+
+  const dislikeAnimation = useAnimatedStyle(() => ({
+    opacity: withSpring(interpolate(
+      translationX.value,
+      [-screenDimensions.screenWidth, 0, hiddenTranslateX],
+      [1, 0.4, 0.4]
+    )),
+
+    transform: [
+      {translateX: withSpring(interpolate(
+        translationX.value,
+        [-screenDimensions.screenWidth, 0, hiddenTranslateX],
+        [0.3 * screenDimensions.screenWidth + 30, -0.15 * screenDimensions.screenWidth - 60,  -0.15 * screenDimensions.screenWidth - 60]
+      ))},
+
+      {scale: withSpring(interpolate(
+        translationX.value,
+        [-screenDimensions.screenWidth, 0, hiddenTranslateX],
+        [2.0, 1, 1]
+      ))}
+    ]
+  }))
+
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -143,6 +195,10 @@ const MovieRecommendationScreen = (props) => {
         <Text style={styles.header}>Suggest Me</Text>
 
         <View style={styles.movieCards}>
+
+          <Animated.View style={[styles.dislikeAnimation, dislikeAnimation]}>
+            <Fontisto name='dislike' size={40} color={COLOURS.red} />
+          </Animated.View>
           {nextCardIndex !== Infinity ? (
             <Animated.View style={[styles.nextMovieCard, nextCardStyle]}>
               <Image source={{ uri: baseImagePath("w500", sampleMovieData[nextCardIndex].poster_path) }} style={styles.movieCardPoster} />
@@ -172,6 +228,9 @@ const MovieRecommendationScreen = (props) => {
             )
           }
 
+          <Animated.View style={[styles.dislikeAnimation, styles.likeAnimation, likeAnimation]}>
+          <Fontisto name='like' size={40} color={COLOURS.green} />
+          </Animated.View>
         </View>
       </ImageBackground>
     </SafeAreaView>
@@ -194,7 +253,9 @@ const styles = StyleSheet.create({
     height: '60%',
     aspectRatio: 2 / 3,
     marginTop: 30,
-    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
   movieCard: {
@@ -202,14 +263,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: 'black',
     borderColor: COLOURS.secondary,
+    borderRadius: 20,
+    overflow: 'hidden'
+  },
+
+  dislikeAnimation: {
+    position: 'absolute',
+    aspectRatio: 1,
+    width: 70,
+    borderRadius: 100,
+    backgroundColor: 'transparent',
+    borderWidth: 5,
+    borderColor: COLOURS.red,
+    zIndex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
 
   movieCardPoster: {
     flex: 1
   },
 
+  likeAnimation: {
+    borderColor: COLOURS.green,
+  },
+
   nextMovieCard: {
     ...StyleSheet.absoluteFillObject,
+    borderRadius: 20,
+    overflow: 'hidden'
   },
 
   movieTitle: {
