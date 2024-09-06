@@ -16,7 +16,7 @@ const SettingsScreen = ({ navigation }) => {
       <ImageBackground style={{ flex: 1, alignItems: 'center' }} source={require('../../../assets/background.png')}>
 
         <TouchableOpacity style={styles.goBackIconContainer} onPress={() => {
-          navigation.navigate('Profile')
+          navigation.navigate('ProfileAndSettingsScreen')
         }}>
           <Entypo name='chevron-with-circle-left' color={'white'} size={30} />
         </TouchableOpacity>

@@ -11,6 +11,7 @@ import SearchScreen from '../screens/AppScreens/SearchScreen'
 import ProfileScreen from '../screens/AppScreens/ProfileScreens/ProfileScreen'
 import EditProfileScreen from '../screens/AppScreens/ProfileScreens/EditProfileScreen'
 import SettingsScreen from '../screens/AppScreens/ProfileScreens/SettingsScreen'
+import ProfileAndSettingsScreen from '../screens/AppScreens/ProfileScreens/ProfileAndSettingsScreen'
 
 const TabNavigator = createBottomTabNavigator()
 
@@ -99,6 +100,15 @@ const AppNavigator = () => {
                         tabBarIcon: ({ focused }) => (
                             <Ionicons name='person' size={iconSize} color={focused ? COLOURS.orange : 'black'} />
                         )
+                    }}
+                />
+
+                <TabNavigator.Screen 
+                    name='ProfileAndSettingsScreen'
+                    component={ProfileAndSettingsScreen}
+                    options={{
+                        tabBarButton: () => null,
+                        tabBarStyle: {display: 'none'}
                     }}
                 />
 

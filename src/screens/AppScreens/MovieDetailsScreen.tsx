@@ -13,17 +13,9 @@ import ReviewCard from '../../components/ForMovieDetailsScreen/ReviewCard'
 
 const StatusBarHeight = screenDimensions.StatusBarHeight || 0
 
-function handlePressDislike() {
-
-}
-
-function handlePressLike() {
-
-}
-
 const MovieDetailsScreen = ({ navigation, route }) => {
 
-  const { fromSearchScreen, movieID, backdropPath, posterPath } = route.params
+  const { fromSearchScreen, movieID, backdropPath, posterPath, fromProfile } = route.params
   
   const isFocused = useIsFocused()
   
@@ -33,6 +25,9 @@ const MovieDetailsScreen = ({ navigation, route }) => {
   
   const scrollViewRef = useRef<ScrollView>(null)
   const flatListRef = useRef<FlatList<any>>(null);
+
+  const [isMovieLiked, setIsMovieLiked] = useState<boolean>(false)
+  const [isMovieDisliked, setIsMovieDisliked] = useState<boolean>(false)
 
   useEffect(() => {
     // to make sure your cast flatlist starts from index 0 for the flatlist to have time to initialise all items
@@ -77,6 +72,20 @@ const MovieDetailsScreen = ({ navigation, route }) => {
     return <ActivityIndicator style={{ flex: 1, backgroundColor: 'black' }} size={'large'} color={COLOURS.orange} />
   }
 
+  function handlePressDislike() {
+    setIsMovieDisliked(true)
+    if (isMovieLiked){
+      setIsMovieLiked(false)
+    }
+  }
+  
+  function handlePressLike() {
+    setIsMovieLiked(true)
+    if (isMovieDisliked) {
+      setIsMovieDisliked(false)
+    }
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ImageBackground style={{ flex: 1 }} source={require("../../assets/background.png")}>
@@ -84,6 +93,8 @@ const MovieDetailsScreen = ({ navigation, route }) => {
         <TouchableOpacity style={styles.goBackIconContainer} onPress={() => {
           if (fromSearchScreen) {
             navigation.navigate("SearchScreen")
+          } else if (fromProfile) {
+            navigation.navigate("Profile")
           } else {
             navigation.navigate("Home")
           }
@@ -193,12 +204,12 @@ const MovieDetailsScreen = ({ navigation, route }) => {
           <View style={{ height: 110 }} />
         </ScrollView>
         <View style={styles.likeAndDislikeButtonsContainer}>
-          <TouchableOpacity onPress={() => handlePressDislike()} style={[styles.likeOrDislikeButton, { backgroundColor: COLOURS.red }]}>
-            <Fontisto name='dislike' size={40} color={'black'} />
+          <TouchableOpacity onPress={() => handlePressDislike()} style={isMovieDisliked ? [styles.movieIsLikedOrDislikedButton, {backgroundColor: COLOURS.red}] : [styles.likeOrDislikeButton, { borderColor: COLOURS.red }]}>
+            <Fontisto name='dislike' size={40} color={isMovieDisliked ? 'black': COLOURS.red} />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => handlePressLike()} style={[styles.likeOrDislikeButton, { backgroundColor: COLOURS.green }]}>
-            <Fontisto name='like' size={40} color={'black'} />
+          <TouchableOpacity onPress={() => handlePressLike()} style={isMovieLiked ? styles.movieIsLikedOrDislikedButton : [styles.likeOrDislikeButton, { borderColor: COLOURS.green }]}>
+            <Fontisto name='like' size={40} color={isMovieLiked ? 'black': COLOURS.green} />
           </TouchableOpacity>
         </View>
       </ImageBackground>
@@ -319,6 +330,17 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 100,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    borderWidth: 5,
+    backgroundColor: 'transparent'
+  },
+
+  movieIsLikedOrDislikedButton: {
+    height: '80%',
+    aspectRatio: 1,
+    borderRadius: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLOURS.green
   }
 })
