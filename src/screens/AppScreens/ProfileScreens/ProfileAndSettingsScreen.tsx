@@ -1,16 +1,22 @@
 import { View, Text, SafeAreaView, ImageBackground, StyleSheet, Image, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { screenDimensions } from '../../../constants/screenDimensions'
 import { COLOURS } from '../../../theme/theme'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import Entypo from 'react-native-vector-icons/Entypo'
+import AuthContext from '../../../contexts/AuthContext'
+import { signOut } from 'firebase/auth'
+import { AUTH } from '../../../../firebase.config'
 
 const ProfileAndSettingsScreen = ({ navigation }) => {
 
     const [profileImgURI, setProfileImgURI] = useState<string>('')
+    const { user, setUser } = useContext(AuthContext)
 
-    function handleSignOut() {
-        navigation.replace("SignInScreen")
+    async function handleSignOut() {
+        await signOut(AUTH).then(() => {
+            setUser(undefined)
+        })
     }
 
     return (

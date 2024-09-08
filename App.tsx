@@ -1,3 +1,4 @@
+import React, { useContext } from 'react';
 import { createStackNavigator } from '@react-navigation/stack'
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import AuthNavigator from './src/navigation/AuthNavigator';
@@ -6,6 +7,9 @@ import * as Font from 'expo-font'
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SettingsContext from './src/contexts/SettingsContext';
+import AuthContext from './src/contexts/AuthContext'
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { AUTH } from './firebase.config';
 
 const Stack = createStackNavigator();
 
@@ -13,6 +17,8 @@ export default function App() {
 
   const [fontLoaded, isFontLoaded] = useState(false)
   const [showAdultFilms, setShowAdultFilms] = useState(true)
+
+  const [ user, setUser ] = useState<any>(getAuth().currentUser)
 
   useEffect(() => {
     Font.loadAsync({
@@ -29,14 +35,16 @@ export default function App() {
   if (fontLoaded) {
     return (
       <SafeAreaProvider>
-        <SettingsContext.Provider value={{ showAdultFilms, setShowAdultFilms }}>
-          <StatusBar style='auto' networkActivityIndicatorVisible={false} />
-          <NavigationContainer>
-            <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>
-              <Stack.Screen name='AuthNavigator' component={AuthNavigator} />
-            </Stack.Navigator>
-          </NavigationContainer>
-        </SettingsContext.Provider>
+        <AuthContext.Provider value={{ user, setUser }}>
+          <SettingsContext.Provider value={{ showAdultFilms, setShowAdultFilms }}>
+            <StatusBar style='auto' networkActivityIndicatorVisible={false} />
+            <NavigationContainer>
+              <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>
+                <Stack.Screen name='AuthNavigator' component={AuthNavigator} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </SettingsContext.Provider>
+        </AuthContext.Provider>
       </SafeAreaProvider>
     );
   }

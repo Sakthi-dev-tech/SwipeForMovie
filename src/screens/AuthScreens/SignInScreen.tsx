@@ -1,12 +1,18 @@
 import { Animated, ImageBackground, SafeAreaView, StyleSheet, TouchableOpacity, View, TextInput, Text, ScrollView } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { StatusBar } from 'expo-status-bar';
 import { COLOURS } from '../../theme/theme';
 import { screenDimensions } from '../../constants/screenDimensions';
 import Entypo from 'react-native-vector-icons/Entypo'
 import AntDesign from 'react-native-vector-icons/AntDesign'
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { AUTH } from '../../../firebase.config';
+import AuthContext from '../../contexts/AuthContext';
 
 export default function SignInScreen({ navigation, route }) {
+
+    const { user, setUser } = useContext(AuthContext)
+
     const { roundedContainerForStartingScreenHeightRatio } = route?.params
 
     const animatedHeight = useRef(new Animated.Value(roundedContainerForStartingScreenHeightRatio ? screenDimensions.screenHeight * roundedContainerForStartingScreenHeightRatio : 0)).current;
@@ -35,18 +41,16 @@ export default function SignInScreen({ navigation, route }) {
         }
     }, [isReady])
 
-    function handleSignIn() {
-        navigation.replace("AppNavigator")
+    async function handleSignIn() {
+        await signInWithEmailAndPassword(AUTH, email, password).then((userCreds) => {
+            setUser(getAuth().currentUser)
+        });
     }
 
     function handleNavToSignUp() {
         navigation.replace('SignUpScreen', {
             roundedContainerForStartingScreenHeightRatio: 0.50
         })
-    }
-
-    function handleLogInWithGoogle() {
-
     }
 
     return (
@@ -95,13 +99,6 @@ export default function SignInScreen({ navigation, route }) {
                                         <Text style={styles.signUpPageNavText}>Don't have an account? </Text>
                                         <TouchableOpacity onPress={() => { handleNavToSignUp() }}>
                                             <Text style={[styles.signUpPageNavText, { color: 'blue' }]}>Sign Up</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <Text>-------OR-------</Text>
-                                    <View style={styles.SMSignUp}>
-                                        <TouchableOpacity style={styles.signInWithGoogleButton} onPress={() => handleLogInWithGoogle()}>
-                                            <AntDesign name='google' size={20} />
-                                            <Text style={{ fontWeight: 'bold', fontFamily: 'Lato' }}>Sign In With Google</Text>
                                         </TouchableOpacity>
                                     </View>
                                 </View>

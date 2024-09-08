@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 
 import EvilIcons from 'react-native-vector-icons/EvilIcons'
 import { COLOURS } from '../../theme/theme'
-import { baseImagePath, movieDetails, nowPlayingMovies, popularMovies, upcomingMovies } from '../../api/MovieAPICall'
+import { baseImagePath, movieDetails, movies, nowPlayingMovies, popularMovies, upcomingMovies } from '../../api/MovieAPICall'
 import PopularAndUpcomingMovieCard from '../../components/ForHomepage/PopularAndUpcomingMovieCard'
 import { screenDimensions } from '../../constants/screenDimensions'
 import NowPlayingMovieCard from '../../components/ForHomepage/NowPlayingMovieCard'
@@ -19,9 +19,8 @@ const HomeScreen = ({ navigation }) => {
     const [searchQuery, setSearchQuery] = useState<string>('')
 
     const getNowPlayingMoviesList = async () => {
-
         try {
-            let response = await fetch(`${nowPlayingMovies}&include_adult=${showAdultFilms}`)
+            let response = await fetch(movies('now_playing', showAdultFilms))
             let json = await response.json();
             return json
         } catch (err) {
@@ -30,7 +29,7 @@ const HomeScreen = ({ navigation }) => {
     }
     const getPopularMoviesList = async () => {
         try {
-            let response = await fetch(`${popularMovies}&include_adult=${showAdultFilms}`)
+            let response = await fetch(movies('popular', showAdultFilms))
             let json = await response.json();
             return json
         } catch (err) {
@@ -39,7 +38,7 @@ const HomeScreen = ({ navigation }) => {
     }
     const getUpcomingMoviesList = async () => {
         try {
-            let response = await fetch(`${upcomingMovies}&include_adult=${showAdultFilms}`)
+            let response = await fetch(movies('upcoming', showAdultFilms))
             let json = await response.json();
             return json
         } catch (err) {
@@ -89,11 +88,11 @@ const HomeScreen = ({ navigation }) => {
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <ImageBackground style={{ flex: 1 }} source={require('../../assets/background.png')}>
-                <View style={{ flex: 1, marginTop: screenDimensions.StatusBarHeight + 10, backgroundColor: 'black'}}>
+                <View style={{ flex: 1, marginTop: screenDimensions.StatusBarHeight}}>
                     <Animated.View style={[styles.searchMovieContainer, {
                         opacity: scrollY.interpolate({
                             inputRange: [0, 250],
-                            outputRange: [1, 0]
+                            outputRange: [1, -5]
                         }),
                         transform: [{
                             scale: scrollY.interpolate({
@@ -168,7 +167,7 @@ const HomeScreen = ({ navigation }) => {
                                 isFirst={index == 0 ? true : false}
                                 isLast={index == popularMoviesList?.length - 1 ? true : false}
                                 title={item.original_title}
-                                imagePath={baseImagePath("w185", item.poster_path)}
+                                imagePath={baseImagePath("w300", item.poster_path)}
                                 cardFunction={() => {
                                     navigation.navigate('MovieDetails', {
                                         fromSearchScreen: false,

@@ -1,5 +1,5 @@
 import { ActivityIndicator, Animated, FlatList, Image, ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import GoogleIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { baseImagePath, movieCastDetails, movieDetails, movieReviews } from '../../api/MovieAPICall'
@@ -10,10 +10,14 @@ import { useIsFocused, useNavigation } from '@react-navigation/native'
 import { screenDimensions } from '../../constants/screenDimensions'
 import CastRenderItem from '../../components/ForMovieDetailsScreen/CastRenderItem'
 import ReviewCard from '../../components/ForMovieDetailsScreen/ReviewCard'
+import { supabase } from '../../Embeddings/supabase'
+import AuthContext from '../../contexts/AuthContext'
 
 const StatusBarHeight = screenDimensions.StatusBarHeight || 0
 
 const MovieDetailsScreen = ({ navigation, route }) => {
+
+  const { user } = useContext(AuthContext)
 
   const { fromSearchScreen, movieID, backdropPath, posterPath, fromProfile } = route.params
   
@@ -29,6 +33,69 @@ const MovieDetailsScreen = ({ navigation, route }) => {
   const [isMovieLiked, setIsMovieLiked] = useState<boolean>(false)
   const [isMovieDisliked, setIsMovieDisliked] = useState<boolean>(false)
 
+  const [listOfAllLikedMovies, setListOfAllLikedMovies] = useState<any>([])
+  const [listOfAllDislikedMovies, setListOfAllDislikedMovies] = useState<any>([])
+  const [currentMovieForDB, setCurrentMovieForDB] = useState<any>(undefined)
+
+  const [movieDeetsFetched, setMovieDeetsFetched] = useState<boolean>(false)
+  const [fetchedLikedAndDislikedMovies, setFetchedLikedAndDislikedMovies] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    if (movieDeetsFetched && fetchedLikedAndDislikedMovies) {
+      setIsLoading(false)
+    }
+
+    // if page not focused
+    if (!isFocused) {
+      setIsLoading(true)
+      setMovieDeetsFetched(false)
+      setFetchedLikedAndDislikedMovies(false)
+    }
+  }, [isFocused, movieDeetsFetched, fetchedLikedAndDislikedMovies])
+
+  // fetch liked and disliked movies
+  useEffect(() => {
+    const fetchLikedMoviesList = async () => {
+      const { data: likedMoviesFromDB, error: likedMoviesFromDBError } = await supabase
+      .from("UsersMovieData")
+      .select("liked_movies")
+      .eq("userID", user.uid)
+      
+      if (likedMoviesFromDB){
+        setListOfAllLikedMovies(likedMoviesFromDB[0].liked_movies)
+        setIsMovieLiked(likedMoviesFromDB[0].liked_movies.some(item => item.id === movieID))
+      }
+
+      if (likedMoviesFromDBError) {
+        console.error("Error while fetching liked movies: ", likedMoviesFromDBError)
+      }
+
+      
+    }
+
+    const fetchDislikedMoviesList = async () => {
+      const { data: dislikedMoviesFromDB, error: dislikedMoviesFromDBError } = await supabase
+      .from("UsersMovieData")
+      .select("disliked_movies")
+      .eq("userID", user.uid)
+      
+      if (dislikedMoviesFromDB){
+        setListOfAllDislikedMovies(dislikedMoviesFromDB[0].disliked_movies)
+        setIsMovieDisliked(dislikedMoviesFromDB[0].disliked_movies.some(item => item.id === movieID))
+      }
+
+      if (dislikedMoviesFromDBError) {
+        console.error("Error while fetching disliked movies: ", dislikedMoviesFromDBError)
+      }
+    }
+
+    fetchLikedMoviesList();
+    fetchDislikedMoviesList();
+
+    setFetchedLikedAndDislikedMovies(true)
+  }, [isFocused, movieID])
+
   useEffect(() => {
     // to make sure your cast flatlist starts from index 0 for the flatlist to have time to initialise all items
     flatListRef.current?.scrollToOffset({ offset: 0, animated: false })
@@ -38,8 +105,20 @@ const MovieDetailsScreen = ({ navigation, route }) => {
         let response = await fetch(movieDetails(movieID))
         let movieDeets = await response.json()
         setMovieDetailsData(movieDeets)
+
+        setCurrentMovieForDB({
+          id: movieID,
+          adult: movieDeets?.adult,
+          title: movieDeets?.title,
+          overview: movieDeets?.overview,
+          poster_path: posterPath,
+          backdrop_path: backdropPath,
+          original_language: movieDeets?.original_language
+        })
       } catch (err) {
         console.error("Something went wrong while fetching the movie details: ", err)
+      } finally {
+        setMovieDeetsFetched(true)
       }
     }
 
@@ -68,22 +147,70 @@ const MovieDetailsScreen = ({ navigation, route }) => {
     fetchReviews()
   }, [isFocused])
 
-  if (movieDetailsData == undefined) {
-    return <ActivityIndicator style={{ flex: 1, backgroundColor: 'black' }} size={'large'} color={COLOURS.orange} />
+  useEffect(() => {
+    const updateTheLikedAndDislikedMoviesInDB = async () => {
+      const { data, error } = await supabase
+      .from('UsersMovieData')
+      .update({
+        liked_movies: listOfAllLikedMovies,
+        disliked_movies: listOfAllDislikedMovies
+      })
+      .eq("userID", user.uid)
+    }
+
+    if (!isFocused){      
+      updateTheLikedAndDislikedMoviesInDB();
+    }
+
+  }, [isFocused])
+
+  const handleGoBack = async () => {
+    if (fromSearchScreen) {
+      navigation.navigate("SearchScreen")
+    } else if (fromProfile) {
+      navigation.navigate("Profile")
+    } else {
+      navigation.navigate("Home")
+    }
+    scrollViewRef?.current?.scrollTo({y: 0, animated: false})
   }
 
   function handlePressDislike() {
-    setIsMovieDisliked(true)
+
+    if (isMovieDisliked){
+      // if already disliked, just undislike it
+      setListOfAllDislikedMovies(list => list.filter(item => item.id !== movieID))
+      setIsMovieDisliked(false)
+    } else {
+      setListOfAllDislikedMovies(prevMovies => [...prevMovies, currentMovieForDB])
+      setIsMovieDisliked(true)
+    }
     if (isMovieLiked){
+      // if movie was liked before
+      setListOfAllLikedMovies(list => list.filter(item => item.id !== movieID))
       setIsMovieLiked(false)
     }
   }
   
   function handlePressLike() {
-    setIsMovieLiked(true)
+
+    if (isMovieLiked) {
+      // if already liked, just unlike it
+      setListOfAllLikedMovies(list => list.filter(item => item.id !== movieID))
+      setIsMovieLiked(false)
+    } else {
+      setListOfAllLikedMovies(prevMovies => [...prevMovies, currentMovieForDB])
+      setIsMovieLiked(true)
+    }
+
     if (isMovieDisliked) {
+      setListOfAllDislikedMovies(list => list.filter(item => item.id !== movieID))
       setIsMovieDisliked(false)
     }
+  }
+
+  if (isLoading) {
+    return <ActivityIndicator style={{ flex: 1, backgroundColor: 'black' }} size={'large'} color={COLOURS.orange} />
   }
 
   return (
@@ -91,14 +218,7 @@ const MovieDetailsScreen = ({ navigation, route }) => {
       <ImageBackground style={{ flex: 1 }} source={require("../../assets/background.png")}>
 
         <TouchableOpacity style={styles.goBackIconContainer} onPress={() => {
-          if (fromSearchScreen) {
-            navigation.navigate("SearchScreen")
-          } else if (fromProfile) {
-            navigation.navigate("Profile")
-          } else {
-            navigation.navigate("Home")
-          }
-          scrollViewRef?.current?.scrollTo({y: 0, animated: false})
+          handleGoBack()
         }}>
           <Entypo name='chevron-with-circle-left' color={'white'} size={30} />
         </TouchableOpacity>
@@ -201,7 +321,7 @@ const MovieDetailsScreen = ({ navigation, route }) => {
             />
           </View>
 
-          <View style={{ height: 110 }} />
+          <View style={{ height: 125 }} />
         </ScrollView>
         <View style={styles.likeAndDislikeButtonsContainer}>
           <TouchableOpacity onPress={() => handlePressDislike()} style={isMovieDisliked ? [styles.movieIsLikedOrDislikedButton, {backgroundColor: COLOURS.red}] : [styles.likeOrDislikeButton, { borderColor: COLOURS.red }]}>
@@ -332,7 +452,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 5,
-    backgroundColor: 'transparent'
+    backgroundColor: 'black'
   },
 
   movieIsLikedOrDislikedButton: {

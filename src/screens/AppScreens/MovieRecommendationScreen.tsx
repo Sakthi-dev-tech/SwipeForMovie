@@ -8,6 +8,7 @@ import { baseImagePath } from '../../api/MovieAPICall'
 import { LinearGradient } from 'expo-linear-gradient'
 import Fontisto from 'react-native-vector-icons/Fontisto'
 
+
 const sampleMovieData = [
   {
     "adult": false,
@@ -70,7 +71,11 @@ const sampleMovieData = [
     "vote_count": 25274
   },
 ]
+
+// I need title, overview and poster path
+
 const MovieRecommendationScreen = (props) => {
+  
   const [currCardindex, setCurrCardIndex] = useState(0)
   const [nextCardIndex, setNextCardIndex] = useState(1)
 

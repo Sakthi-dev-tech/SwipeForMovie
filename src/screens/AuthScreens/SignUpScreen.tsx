@@ -5,6 +5,10 @@ import { COLOURS } from '../../theme/theme';
 import { screenDimensions } from '../../constants/screenDimensions';
 import Entypo from 'react-native-vector-icons/Entypo'
 import AntDesign from 'react-native-vector-icons/AntDesign'
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { AUTH, FIRESTORE } from '../../../firebase.config'
+import { collection, doc, setDoc } from 'firebase/firestore';
+import { supabase } from '../../Embeddings/supabase';
 
 export default function SignUpScreen({ navigation, route }) {
 
@@ -23,18 +27,42 @@ export default function SignUpScreen({ navigation, route }) {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
 
-    function handleSignUp() {
+    async function handleSignUp() {
+        try {
+            await createUserWithEmailAndPassword(AUTH, email, password).then(async (userCredentials) => {
+                const user = userCredentials.user
+                await setDoc(
+                    doc(collection(FIRESTORE, "userInfo"), user.uid),
+                    {
+                        username: username,
+                        email: email
+                    }
+                )
 
+                const { data, error } = await supabase
+                .from('UsersMovieData')
+                .insert([
+                    {
+                        userID: user.uid,
+                        liked_movies: [],
+                        disliked_movies: []
+                    }
+                ])
+                .select()
+            })
+          } catch (err) {
+            console.error("Error while signing up by email: ", err)
+          } finally { 
+            navigation.replace("SignInScreen", {
+                roundedContainerForStartingScreenHeightRatio: 0.75
+            })
+          }
     }
 
     function handleNavToSignInPage() {
         navigation.replace("SignInScreen", {
             roundedContainerForStartingScreenHeightRatio: 0.75
         })
-    }
-
-    function handleSignUpWithGoogle() {
-
     }
 
     useEffect(() => {
@@ -131,13 +159,6 @@ export default function SignUpScreen({ navigation, route }) {
                                             <Text style={[styles.signInPageNavText, { color: 'blue' }]}>Sign In</Text>
                                         </TouchableOpacity>
                                     </View>
-                                    <Text>-------OR-------</Text>
-
-                                    <TouchableOpacity style={styles.signUpWithGoogleButton} onPress={() => handleSignUpWithGoogle()}>
-                                        <AntDesign name='google' size={20} />
-                                        <Text style={{ fontWeight: 'bold', fontFamily: 'Lato' }}>Sign Up With Google</Text>
-                                    </TouchableOpacity>
-
                                 </View>
                             </ScrollView>
                         </Animated.View>
