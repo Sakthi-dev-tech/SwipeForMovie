@@ -8,6 +8,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign'
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { AUTH } from '../../../firebase.config';
 import AuthContext from '../../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignInScreen({ navigation, route }) {
 
@@ -45,6 +46,8 @@ export default function SignInScreen({ navigation, route }) {
         await signInWithEmailAndPassword(AUTH, email, password).then((userCreds) => {
             setUser(getAuth().currentUser)
         });
+
+        await AsyncStorage.setItem("loggedInUser", JSON.stringify(user))
     }
 
     function handleNavToSignUp() {

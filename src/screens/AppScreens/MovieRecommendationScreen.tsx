@@ -1,86 +1,107 @@
 import { View, Text, SafeAreaView, ImageBackground, Image, StyleSheet } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { screenDimensions } from '../../constants/screenDimensions'
 import { COLOURS } from '../../theme/theme'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
-import Animated, { interpolate, ReduceMotion, runOnJS, useAnimatedStyle, useDerivedValue, useSharedValue, withSpring } from 'react-native-reanimated'
+import Animated, { interpolate, runOnJS, useAnimatedStyle, useDerivedValue, useSharedValue, withSpring } from 'react-native-reanimated'
 import { baseImagePath } from '../../api/MovieAPICall'
 import { LinearGradient } from 'expo-linear-gradient'
 import Fontisto from 'react-native-vector-icons/Fontisto'
-
-
-const sampleMovieData = [
-  {
-    "adult": false,
-    "backdrop_path": "/mDfJG3LC3Dqb67AZ52x3Z0jU0uB.jpg",
-    "genre_ids": [
-      12,
-      28,
-      878
-    ],
-    "id": 299536,
-    "original_language": "en",
-    "original_title": "Avengers: Infinity War",
-    "overview": "As the Avengers and their allies have continued to protect the world from threats too large for any one hero to handle, a new danger has emerged from the cosmic shadows: Thanos. A despot of intergalactic infamy, his goal is to collect all six Infinity Stones, artifacts of unimaginable power, and use them to inflict his twisted will on all of reality. Everything the Avengers have fought for has led up to this moment - the fate of Earth and existence itself has never been more uncertain.",
-    "popularity": 352.831,
-    "poster_path": "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
-    "release_date": "2018-04-25",
-    "title": "Avengers: Infinity War",
-    "video": false,
-    "vote_average": 8.246,
-    "vote_count": 29319
-  },
-  {
-    "adult": false,
-    "backdrop_path": "/9BBTo63ANSmhC4e6r62OJFuK2GL.jpg",
-    "genre_ids": [
-      878,
-      28,
-      12
-    ],
-    "id": 24428,
-    "original_language": "en",
-    "original_title": "The Avengers",
-    "overview": "When an unexpected enemy emerges and threatens global safety and security, Nick Fury, director of the international peacekeeping agency known as S.H.I.E.L.D., finds himself in need of a team to pull the world back from the brink of disaster. Spanning the globe, a daring recruitment effort begins!",
-    "popularity": 211.869,
-    "poster_path": "/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg",
-    "release_date": "2012-04-25",
-    "title": "The Avengers",
-    "video": false,
-    "vote_average": 7.717,
-    "vote_count": 30403
-  },
-  {
-    "adult": false,
-    "backdrop_path": "/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg",
-    "genre_ids": [
-      12,
-      878,
-      28
-    ],
-    "id": 299534,
-    "original_language": "en",
-    "original_title": "Avengers: Endgame",
-    "overview": "After the devastating events of Avengers: Infinity War, the universe is in ruins due to the efforts of the Mad Titan, Thanos. With the help of remaining allies, the Avengers must assemble once more in order to undo Thanos' actions and restore order to the universe once and for all, no matter what consequences may be in store.",
-    "popularity": 226.753,
-    "poster_path": "/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
-    "release_date": "2019-04-24",
-    "title": "Avengers: Endgame",
-    "video": false,
-    "vote_average": 8.252,
-    "vote_count": 25274
-  },
-]
+import { supabase } from '../../Embeddings/supabase'
+import AuthContext from '../../contexts/AuthContext'
+import { useIsFocused } from '@react-navigation/native'
 
 // I need title, overview and poster path
 
 const MovieRecommendationScreen = (props) => {
+
+  const isFocused = useIsFocused()
+
+  useEffect(() => {
+    const rando = async () => {
+      const { data, error } = await supabase.functions.invoke('hello-world', {
+        body: { name: 'Functions' },
+      })
+
+      console.log(data, error)
+    }
+
+    rando()
+  },[isFocused])
+
+  const [listOfRecommendedMovies, setListOfRecommendedMovies] = useState([
+    {
+      "adult": false,
+      "backdrop_path": "/mDfJG3LC3Dqb67AZ52x3Z0jU0uB.jpg",
+      "genre_ids": [
+        12,
+        28,
+        878
+      ],
+      "id": 299536,
+      "original_language": "en",
+      "original_title": "Avengers: Infinity War",
+      "overview": "As the Avengers and their allies have continued to protect the world from threats too large for any one hero to handle, a new danger has emerged from the cosmic shadows: Thanos. A despot of intergalactic infamy, his goal is to collect all six Infinity Stones, artifacts of unimaginable power, and use them to inflict his twisted will on all of reality. Everything the Avengers have fought for has led up to this moment - the fate of Earth and existence itself has never been more uncertain.",
+      "popularity": 352.831,
+      "poster_path": "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+      "release_date": "2018-04-25",
+      "title": "Avengers: Infinity War",
+      "video": false,
+      "vote_average": 8.246,
+      "vote_count": 29319
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/9BBTo63ANSmhC4e6r62OJFuK2GL.jpg",
+      "genre_ids": [
+        878,
+        28,
+        12
+      ],
+      "id": 24428,
+      "original_language": "en",
+      "original_title": "The Avengers",
+      "overview": "When an unexpected enemy emerges and threatens global safety and security, Nick Fury, director of the international peacekeeping agency known as S.H.I.E.L.D., finds himself in need of a team to pull the world back from the brink of disaster. Spanning the globe, a daring recruitment effort begins!",
+      "popularity": 211.869,
+      "poster_path": "/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg",
+      "release_date": "2012-04-25",
+      "title": "The Avengers",
+      "video": false,
+      "vote_average": 7.717,
+      "vote_count": 30403
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg",
+      "genre_ids": [
+        12,
+        878,
+        28
+      ],
+      "id": 299534,
+      "original_language": "en",
+      "original_title": "Avengers: Endgame",
+      "overview": "After the devastating events of Avengers: Infinity War, the universe is in ruins due to the efforts of the Mad Titan, Thanos. With the help of remaining allies, the Avengers must assemble once more in order to undo Thanos' actions and restore order to the universe once and for all, no matter what consequences may be in store.",
+      "popularity": 226.753,
+      "poster_path": "/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+      "release_date": "2019-04-24",
+      "title": "Avengers: Endgame",
+      "video": false,
+      "vote_average": 8.252,
+      "vote_count": 25274
+    },
+  ])
+
+  const { user, setUser } = useContext(AuthContext)
+
+  const [likedMoviesData, setLikedMoviesData] = useState<any>([])
+  const [dislikedMoviesData, setDislikedMoviesData] = useState<any>([])
   
   const [currCardindex, setCurrCardIndex] = useState(0)
   const [nextCardIndex, setNextCardIndex] = useState(1)
 
   const hiddenTranslateX = screenDimensions.screenWidth * 2
-  const VELOCITY_LIMIT = 800
+  const VELOCITY_LIMIT = 900
 
   const translationX = useSharedValue(0);
   const rotateDeg = useDerivedValue(() => interpolate(
@@ -92,7 +113,7 @@ const MovieRecommendationScreen = (props) => {
   function changeCard() {
     translationX.value = 0
     setCurrCardIndex(nextCardIndex)
-    if (nextCardIndex + 1 >= sampleMovieData.length) {
+    if (nextCardIndex + 1 >= listOfRecommendedMovies.length) {
       setNextCardIndex(Infinity)
     } else {
       setNextCardIndex(nextCardIndex + 1)
@@ -118,11 +139,9 @@ const MovieRecommendationScreen = (props) => {
 
       translationX.value = withSpring(
         hiddenTranslateX * Math.sign(event.velocityX),
-        { duration: 50 },
+        { duration: 30 },
         () => runOnJS(changeCard)()
       )
-
-
     });
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -194,6 +213,37 @@ const MovieRecommendationScreen = (props) => {
   }))
 
 
+  useEffect(() => {
+    const fetchLikedMovies = async () => {
+      const { data: likedMoviesDataFetched, error } = await supabase
+      .from("UsersMovieData")
+      .select("liked_movies")
+      .eq('userID', user.uid)
+
+      if (error) { 
+        throw error
+      }
+
+      setLikedMoviesData(likedMoviesDataFetched[0].liked_movies)
+    }
+
+    const fetchDislikedMovies = async () => {
+      const { data: dislikedMoviesDataFetched, error } = await supabase
+      .from("UsersMovieData")
+      .select("disliked_movies")
+      .eq('userID', user.uid)
+
+      if (error) { 
+        throw error
+      }
+
+      setDislikedMoviesData(dislikedMoviesDataFetched[0].disliked_movies)
+    }
+
+    fetchLikedMovies();
+    fetchDislikedMovies();
+  }, [isFocused])
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ImageBackground style={{ flex: 1, alignItems: 'center' }} source={require('../../assets/background.png')}>
@@ -206,10 +256,10 @@ const MovieRecommendationScreen = (props) => {
           </Animated.View>
           {nextCardIndex !== Infinity ? (
             <Animated.View style={[styles.nextMovieCard, nextCardStyle]}>
-              <Image source={{ uri: baseImagePath("w500", sampleMovieData[nextCardIndex].poster_path) }} style={styles.movieCardPoster} />
+              <Image source={{ uri: baseImagePath("w500", listOfRecommendedMovies[nextCardIndex].poster_path) }} style={styles.movieCardPoster} />
               <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0, 0.85)', 'rgba(0,0,0,1)']} style={{ position: 'absolute', width: '100%', height: '100%', justifyContent: 'flex-end' }}>
-                <Text style={styles.movieTitle}>{sampleMovieData[nextCardIndex].original_title}</Text>
-                <Text style={styles.movieOverview}>{sampleMovieData[currCardindex].overview}</Text>
+                <Text style={styles.movieTitle}>{listOfRecommendedMovies[nextCardIndex].original_title}</Text>
+                <Text style={styles.movieOverview}>{listOfRecommendedMovies[currCardindex].overview}</Text>
               </LinearGradient>
             </Animated.View>
           ) : (
@@ -219,10 +269,10 @@ const MovieRecommendationScreen = (props) => {
             currCardindex !== Infinity ? (
               <GestureDetector gesture={pan}>
                 <Animated.View style={[styles.movieCard, cardStyle]}>
-                  <Image source={{ uri: baseImagePath("w500", sampleMovieData[currCardindex].poster_path) }} style={styles.movieCardPoster} />
+                  <Image source={{ uri: baseImagePath("w500", listOfRecommendedMovies[currCardindex].poster_path) }} style={styles.movieCardPoster} />
                   <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0, 0.85)', 'rgba(0,0,0,1)']} style={{ position: 'absolute', width: '100%', height: '100%', justifyContent: 'flex-end' }}>
-                    <Text style={styles.movieTitle}>{sampleMovieData[currCardindex].original_title}</Text>
-                    <Text style={styles.movieOverview}>{sampleMovieData[currCardindex].overview}</Text>
+                    <Text style={styles.movieTitle}>{listOfRecommendedMovies[currCardindex].original_title}</Text>
+                    <Text style={styles.movieOverview}>{listOfRecommendedMovies[currCardindex].overview}</Text>
                   </LinearGradient>
                 </Animated.View>
               </GestureDetector>

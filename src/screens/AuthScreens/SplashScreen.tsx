@@ -1,3 +1,4 @@
+import React from "react";
 import { ImageBackground, SafeAreaView, StyleSheet, View, Animated } from "react-native";
 import { COLOURS } from "../../theme/theme";
 import Onboarding from 'react-native-onboarding-swiper'

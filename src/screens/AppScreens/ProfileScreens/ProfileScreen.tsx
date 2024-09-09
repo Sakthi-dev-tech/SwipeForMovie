@@ -15,7 +15,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const isFocused = useIsFocused();
 
-  const { user } = useContext(AuthContext)
+  const { user, setUser } = useContext(AuthContext)
   const [likedMoviesData, setLikedMoviesData] = useState<any>([])
   const [dislikedMoviesData, setDislikedMoviesData] = useState<any>([])
 

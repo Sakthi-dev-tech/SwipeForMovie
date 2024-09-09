@@ -8,8 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SettingsContext from './src/contexts/SettingsContext';
 import AuthContext from './src/contexts/AuthContext'
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { AUTH } from './firebase.config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Stack = createStackNavigator();
 
@@ -18,7 +17,7 @@ export default function App() {
   const [fontLoaded, isFontLoaded] = useState(false)
   const [showAdultFilms, setShowAdultFilms] = useState(true)
 
-  const [ user, setUser ] = useState<any>(getAuth().currentUser)
+  const [ user, setUser ] = useState<any>(AsyncStorage.getItem('loggedInUser'))
 
   useEffect(() => {
     Font.loadAsync({
