@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SettingsContext from './src/contexts/SettingsContext';
 import AuthContext from './src/contexts/AuthContext'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from 'firebase/auth';
 
 const Stack = createStackNavigator();
 
@@ -17,7 +18,15 @@ export default function App() {
   const [fontLoaded, isFontLoaded] = useState(false)
   const [showAdultFilms, setShowAdultFilms] = useState(true)
 
-  const [ user, setUser ] = useState<any>(AsyncStorage.getItem('loggedInUser'))
+  const [ user, setUser ] = useState<any>(getAuth().currentUser)
+
+  useEffect(() => {
+    const getLoggedInUser = async () => {
+      setUser(await AsyncStorage.getItem('loggedInUser'))
+    }
+
+    getLoggedInUser();
+  }, [])
 
   useEffect(() => {
     Font.loadAsync({

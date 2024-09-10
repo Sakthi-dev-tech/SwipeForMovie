@@ -1,6 +1,7 @@
+import React from "../../../../../AppData/Local/deno/npm/registry.npmjs.org/@types/react/18.3.5/index.d.ts";
 import { StatusBar } from "expo-status-bar";
 import { ImageBackground, SafeAreaView, StyleSheet, View, Animated } from "react-native";
-import { COLOURS } from "../theme/theme";
+import { COLOURS } from "../theme/theme.ts";
 import Onboarding from 'react-native-onboarding-swiper'
 import LottieView from "lottie-react-native";
 import { useNavigation } from "@react-navigation/native";
