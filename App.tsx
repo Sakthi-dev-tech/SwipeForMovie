@@ -10,15 +10,17 @@ import SettingsContext from './src/contexts/SettingsContext';
 import AuthContext from './src/contexts/AuthContext'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth } from 'firebase/auth';
+import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { FIRESTORE } from './firebase.config';
 
 const Stack = createStackNavigator();
 
 export default function App() {
 
   const [fontLoaded, isFontLoaded] = useState(false)
-  const [showAdultFilms, setShowAdultFilms] = useState(true)
+  const [showAdultFilms, setShowAdultFilms] = useState(false)
 
-  const [ user, setUser ] = useState<any>(getAuth().currentUser)
+  const [user, setUser] = useState<any>(getAuth().currentUser)
 
   useEffect(() => {
     const getLoggedInUser = async () => {
@@ -27,6 +29,19 @@ export default function App() {
 
     getLoggedInUser();
   }, [])
+
+  useEffect(() => {
+    if (user?.uid){
+      const unsubscribe = onSnapshot(doc(FIRESTORE, 'userSettings', user.uid), (snapshot) => {
+        if (snapshot.exists()){
+          setShowAdultFilms(snapshot.data()['adult'])
+        }
+      })
+
+      return () => unsubscribe()
+    }
+
+  }, [user])
 
   useEffect(() => {
     Font.loadAsync({

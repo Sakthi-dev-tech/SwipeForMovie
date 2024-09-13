@@ -5,11 +5,15 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import { COLOURS } from '../../../theme/theme'
 import { screenDimensions } from '../../../constants/screenDimensions'
 import SettingsContext from '../../../contexts/SettingsContext'
+import { doc, setDoc, updateDoc } from 'firebase/firestore'
+import { FIRESTORE } from '../../../../firebase.config'
+import AuthContext from '../../../contexts/AuthContext'
 
 
 const SettingsScreen = ({ navigation }) => {
   
   const { showAdultFilms, setShowAdultFilms } = useContext(SettingsContext)
+  const { user, setUser } = useContext(AuthContext)
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -48,7 +52,12 @@ const SettingsScreen = ({ navigation }) => {
 
             <Switch 
               value={showAdultFilms}
-              onValueChange={(val) => setShowAdultFilms(val)}
+              onValueChange={async (val) => {
+                setShowAdultFilms(val)
+                await updateDoc(doc(FIRESTORE, 'userSettings', user.uid), {
+                  adult: val
+                })
+              }}
               trackColor={{false: 'black', true: '#8c592e'}}
               thumbColor={showAdultFilms ? COLOURS.orange : 'gray'}
             />

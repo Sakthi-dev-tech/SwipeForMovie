@@ -31,32 +31,40 @@ export default function SignUpScreen({ navigation, route }) {
         try {
             await createUserWithEmailAndPassword(AUTH, email, password).then(async (userCredentials) => {
                 const user = userCredentials.user
+
+                await setDoc(
+                    doc(collection(FIRESTORE, "userSettings"), user.uid),
+                    {
+                        adult: false
+                    }
+                )
+                
                 await setDoc(
                     doc(collection(FIRESTORE, "userInfo"), user.uid),
                     {
                         username: username,
-                        email: email
+                        email: email,
                     }
                 )
 
                 const { data, error } = await supabase
-                .from('UsersMovieData')
-                .insert([
-                    {
-                        userID: user.uid,
-                        liked_movies: [],
-                        disliked_movies: []
-                    }
-                ])
-                .select()
+                    .from('UsersMovieData')
+                    .insert([
+                        {
+                            userID: user.uid,
+                            liked_movies: [],
+                            disliked_movies: []
+                        }
+                    ])
+                    .select()
             })
-          } catch (err) {
+        } catch (err) {
             console.error("Error while signing up by email: ", err)
-          } finally { 
+        } finally {
             navigation.replace("SignInScreen", {
                 roundedContainerForStartingScreenHeightRatio: 0.75
             })
-          }
+        }
     }
 
     function handleNavToSignInPage() {
@@ -98,7 +106,7 @@ export default function SignUpScreen({ navigation, route }) {
                                     <TextInput
                                         placeholder='Username'
                                         value={username}
-                                        style={{width: '100%'}}
+                                        style={{ width: '100%' }}
                                         onChangeText={text => {
                                             setUsername(text)
                                         }}
@@ -108,7 +116,7 @@ export default function SignUpScreen({ navigation, route }) {
                                     <Entypo style={styles.icon} name='email' color={COLOURS.orange} size={25} />
                                     <TextInput
                                         placeholder='Email'
-                                        style={{width: '100%'}}
+                                        style={{ width: '100%' }}
                                         keyboardType='email-address'
                                         value={email}
                                         onChangeText={text => {
@@ -119,7 +127,7 @@ export default function SignUpScreen({ navigation, route }) {
                                 <View style={styles.textInputContainer}>
                                     <AntDesign style={styles.icon} name='lock' color={COLOURS.orange} size={25} />
                                     <TextInput
-                                        style={{width: '100%'}}
+                                        style={styles.textInput}
                                         placeholder='Password'
                                         secureTextEntry
                                         value={password}
@@ -131,7 +139,7 @@ export default function SignUpScreen({ navigation, route }) {
                                 <View style={styles.textInputContainer}>
                                     <AntDesign style={styles.icon} name='lock' color={COLOURS.orange} size={25} />
                                     <TextInput
-                                        style={{width: '100%'}}
+                                        style={styles.textInput}
                                         placeholder='Confirm Password'
                                         secureTextEntry
                                         value={confirmPassword}
@@ -205,6 +213,11 @@ const styles = StyleSheet.create({
         backgroundColor: 'lightgray',
         alignItems: 'center',
         flexDirection: 'row',
+    },
+
+    textInput: {
+        flex: 1,
+        height: '100%'
     },
 
     icon: {

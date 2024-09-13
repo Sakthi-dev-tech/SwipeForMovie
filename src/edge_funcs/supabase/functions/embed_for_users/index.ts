@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     // Return the average embedding
     return new Response(
       JSON.stringify({ averageEmbedding: avgEmbedding }),
-      { headers: { 'Content-Type': 'application/json' } }
+      {status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     return new Response(

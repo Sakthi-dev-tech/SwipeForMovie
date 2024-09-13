@@ -67,6 +67,7 @@ export default function SignInScreen({ navigation, route }) {
                                 <View style={styles.textInputContainer}>
                                     <Entypo style={styles.icon} name='email' color={COLOURS.orange} size={25} />
                                     <TextInput
+                                        style={styles.textInput}
                                         placeholder='Email'
                                         keyboardType='email-address'
                                         value={email}
@@ -78,6 +79,7 @@ export default function SignInScreen({ navigation, route }) {
                                 <View style={styles.textInputContainer}>
                                     <AntDesign style={styles.icon} name='lock' color={COLOURS.orange} size={25} />
                                     <TextInput
+                                        style={styles.textInput}
                                         placeholder='Password'
                                         secureTextEntry
                                         value={password}
@@ -151,6 +153,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row'
     },
 
+    textInput: {
+        flex: 1,
+        height: '100%'
+    },
+
     icon: {
         marginHorizontal: 5
     },
@@ -173,10 +180,6 @@ const styles = StyleSheet.create({
 
     signUpPageNavText: {
         fontSize: 15
-    },
-
-    SMSignUp: {
-
     },
 
     signInWithGoogleButton: {
