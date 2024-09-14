@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, ImageBackground, Image, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, SafeAreaView, ImageBackground, Image, StyleSheet, ActivityIndicator, AppState, Alert } from 'react-native'
 import React, { useContext, useEffect, useState } from 'react'
 import { screenDimensions } from '../../constants/screenDimensions'
 import { COLOURS } from '../../theme/theme'
@@ -21,11 +21,12 @@ import SettingsContext from '../../contexts/SettingsContext'
 const MovieRecommendationScreen = (props) => {
 
   const isFocused = useIsFocused()
+  const { appState } = useContext(AuthContext)
 
   const [listOfRecommendedMovies, setListOfRecommendedMovies] = useState<any>([])
 
-  const { user, setUser } = useContext(AuthContext)
-  const { showAdultFilms, setShowAdultFilms } = useContext(SettingsContext)
+  const { user } = useContext(AuthContext)
+  const { showAdultFilms, temperatureForMovieRecommendation } = useContext(SettingsContext)
 
   const [likedMoviesData, setLikedMoviesData] = useState<any>([])
   const [dislikedMoviesData, setDislikedMoviesData] = useState<any>([])
@@ -48,25 +49,26 @@ const MovieRecommendationScreen = (props) => {
     [-75, 0, 75]
   ));
 
-  // update the data in supabase
-  //* UNCOMMENT THIS LATER ON!!!
+  useEffect(() => {
+    if (!isFocused || !(appState === 'active')){
+      // update the data in supabase when we go out of this screen or app
+      const updateTheLikedAndDislikedMoviesInDB = async () => {
+        const { data, error } = await supabase
+          .from('UsersMovieData')
+          .update({
+            liked_movies: likedMoviesData,
+            disliked_movies: dislikedMoviesData
+          })
+          .eq("userID", user.uid)
+      }
 
-  // useEffect(() => {
-  //   const updateTheLikedAndDislikedMoviesInDB = async () => {
-  //     const { data, error } = await supabase
-  //     .from('UsersMovieData')
-  //     .update({
-  //       liked_movies: likedMoviesData,
-  //       disliked_movies: dislikedMoviesData
-  //     })
-  //     .eq("userID", user.uid)
-  //   }
+      updateTheLikedAndDislikedMoviesInDB();
+    }
 
-  //   if (!isFocused){      
-  //     updateTheLikedAndDislikedMoviesInDB();
-  //   }
-
-  // }, [isFocused])
+    if (isFocused) {
+      setUpdateRecommendedMovies(true)
+    }
+  }, [isFocused])
 
   // add the swiped left movie to the dislike movies list
   function handleRecommendedMovieDisliked(movie) {
@@ -78,25 +80,24 @@ const MovieRecommendationScreen = (props) => {
     setLikedMoviesData([...likedMoviesData, movie])
   }
 
-  useEffect(() => {
-    console.log("Liked Movies: ", likedMoviesData)
-    console.log("Disliked Movies: ", dislikedMoviesData)
-  }, [likedMoviesData, dislikedMoviesData])
-
   // this function fetches the recommended movies for the user using the average vector from the user's liked movies
   const fetchRecommendedMovies = async (embedding) => {
     const { data, error } = await supabase.rpc("match_movies", {
       query_embedding: embedding,
-      match_threshold: 0.78,
-      match_count: 5,
+      match_threshold: temperatureForMovieRecommendation,
+      match_count: 4,
       query_adult: showAdultFilms,
-      query_original_language: 'en'
+      liked_movies: likedMoviesData,
+      disliked_movies: dislikedMoviesData
     })
 
     if (error) {
       console.error(error)
     }
 
+    if (data.length === 0){
+      Alert.alert("No movies found!", "Try reducing the similarity value for movies to be recommended!")
+    }
     setListOfRecommendedMovies(data)
   }
 
@@ -123,7 +124,7 @@ const MovieRecommendationScreen = (props) => {
 
   // this should get the recommended movies to show the user using the current liked movies list
   useEffect(() => {
-    if (updateRecommendedMovies === true && likedMoviesData.length > 0) {
+    if (updateRecommendedMovies === true && likedMoviesData && likedMoviesData.length > 0) {
       try {
         const fetchedOverviews = likedMoviesData.map(movies => movies.overview)
         setOverviews(fetchedOverviews)
@@ -133,19 +134,27 @@ const MovieRecommendationScreen = (props) => {
     }
   }, [updateRecommendedMovies, likedMoviesData])
 
+  // when the list of overviews change, get the average embedding for the list of overviews
   useEffect(() => {
-    if (overviews.length > 0) {
+    if (overviews && overviews.length > 0) {
       getAvgEmbeddingForUser(overviews)
     }
   }, [overviews])
 
+  // when the average embedding changes, fetch the recommended movies for that embedding
   useEffect(() => {
     if (userAvgEmbedding) {
       fetchRecommendedMovies(userAvgEmbedding)
+    }
+  }, [userAvgEmbedding])
+
+  // when the list of recommended movies change, change the index of the cards back to the original
+  useEffect(() => {
+    if (listOfRecommendedMovies) {
       setCurrCardIndex(0)
       setNextCardIndex(1)
     }
-  }, [userAvgEmbedding])
+  }, [listOfRecommendedMovies])
 
 
   function changeCard(sign) {
@@ -170,10 +179,10 @@ const MovieRecommendationScreen = (props) => {
   }
 
   useEffect(() => {
-    if (currCardindex === Infinity) {
+    if (nextCardIndex === Infinity) {
       setUpdateRecommendedMovies(true)
     }
-  }, [currCardindex])
+  }, [nextCardIndex])
 
   const pan = Gesture.Pan()
     .onChange((event) => {
@@ -302,7 +311,13 @@ const MovieRecommendationScreen = (props) => {
     fetchDislikedMovies();
   }, [isFocused])
 
-  if (listOfRecommendedMovies.length > 0) {
+  if (likedMoviesData && likedMoviesData.length === 0){
+    return(
+      <ImageBackground style={{flex: 1, backgroundColor: 'black', justifyContent: 'center', alignItems: 'center'}} source={require('../../assets/background.png')}>
+        <Text style={{color: 'white', fontFamily: 'PoppinsBold'}}>Like some movies to get some recommendations!</Text>
+      </ImageBackground>
+    )
+  } else if (listOfRecommendedMovies && listOfRecommendedMovies.length > 0) {
     return (
       <SafeAreaView style={{ flex: 1 }}>
         <ImageBackground style={{ flex: 1, alignItems: 'center' }} source={require('../../assets/background.png')}>
@@ -336,9 +351,11 @@ const MovieRecommendationScreen = (props) => {
                   </Animated.View>
                 </GestureDetector>
               ) : (
-                <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ color: 'white', fontFamily: "PoppinsBold" }}>No more movies to recommend! Sorry!</Text>
-                </View>
+                  <ActivityIndicator
+                    style={{flex: 1, backgroundColor: 'transparent'}}
+                    color={COLOURS.orange}
+                    size={'large'}
+                  />
               )
             }
 
@@ -351,13 +368,13 @@ const MovieRecommendationScreen = (props) => {
     )
   } else {
     return (
-      <View style={{ flex: 1 }}>
+      <ImageBackground style={{ flex: 1 }} source={require('../../assets/background.png')}>
         <ActivityIndicator
-          style={{ flex: 1, backgroundColor: 'black' }}
+          style={{ flex: 1, backgroundColor: 'transparent' }}
           size={'large'}
           color={COLOURS.orange}
         />
-      </View>
+      </ImageBackground>
     )
   }
 

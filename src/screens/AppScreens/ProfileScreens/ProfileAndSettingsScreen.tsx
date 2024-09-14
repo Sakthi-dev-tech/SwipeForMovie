@@ -7,7 +7,6 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import AuthContext from '../../../contexts/AuthContext'
 import { signOut } from 'firebase/auth'
 import { AUTH } from '../../../../firebase.config'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const ProfileAndSettingsScreen = ({ navigation }) => {
 
@@ -18,8 +17,6 @@ const ProfileAndSettingsScreen = ({ navigation }) => {
         await signOut(AUTH).then(() => {
             setUser(undefined)
         })
-
-        await AsyncStorage.removeItem("loggedInUser")
     }
 
     return (

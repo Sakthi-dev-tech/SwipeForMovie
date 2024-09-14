@@ -43,11 +43,10 @@ export default function SignInScreen({ navigation, route }) {
     }, [isReady])
 
     async function handleSignIn() {
-        await signInWithEmailAndPassword(AUTH, email, password).then((userCreds) => {
+        await signInWithEmailAndPassword(AUTH, email, password).then(async (userCreds) => {
             setUser(getAuth().currentUser)
         });
 
-        await AsyncStorage.setItem("loggedInUser", JSON.stringify(user))
     }
 
     function handleNavToSignUp() {

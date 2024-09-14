@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack'
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import { useEffect, useState } from 'react';
 import * as Font from 'expo-font'
@@ -8,10 +8,10 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SettingsContext from './src/contexts/SettingsContext';
 import AuthContext from './src/contexts/AuthContext'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAuth } from 'firebase/auth';
-import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { FIRESTORE } from './firebase.config';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { AUTH, FIRESTORE } from './firebase.config';
+import { AppState, AppStateStatus } from 'react-native';
 
 const Stack = createStackNavigator();
 
@@ -19,22 +19,46 @@ export default function App() {
 
   const [fontLoaded, isFontLoaded] = useState(false)
   const [showAdultFilms, setShowAdultFilms] = useState(false)
-
-  const [user, setUser] = useState<any>(getAuth().currentUser)
+  const [temperatureForMovieRecommendation, setTemperatureForMovieRecommendations] = useState(1.0)
 
   useEffect(() => {
-    const getLoggedInUser = async () => {
-      setUser(await AsyncStorage.getItem('loggedInUser'))
+    const updateTemperatureInFirebase = async () => {
+      if (user) {
+        await updateDoc(doc(FIRESTORE, 'userSettings', user?.uid), {
+          temperature: temperatureForMovieRecommendation
+        })
+      }
     }
 
-    getLoggedInUser();
+    updateTemperatureInFirebase();
+  }, [temperatureForMovieRecommendation])
+
+  const [user, setUser] = useState<any>(getAuth().currentUser)
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(AUTH, (user) => {
+      setUser(user)
+    })
+
+    return () => unsubscribe()
   }, [])
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      setAppState(nextAppState);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (user?.uid){
       const unsubscribe = onSnapshot(doc(FIRESTORE, 'userSettings', user.uid), (snapshot) => {
         if (snapshot.exists()){
           setShowAdultFilms(snapshot.data()['adult'])
+          setTemperatureForMovieRecommendations(snapshot.data()['temperature'])
         }
       })
 
@@ -58,8 +82,8 @@ export default function App() {
   if (fontLoaded) {
     return (
       <SafeAreaProvider>
-        <AuthContext.Provider value={{ user, setUser }}>
-          <SettingsContext.Provider value={{ showAdultFilms, setShowAdultFilms }}>
+        <AuthContext.Provider value={{ user, setUser, appState, setAppState }}>
+          <SettingsContext.Provider value={{ showAdultFilms, setShowAdultFilms, temperatureForMovieRecommendation, setTemperatureForMovieRecommendations }}>
             <StatusBar style='auto' networkActivityIndicatorVisible={false} />
             <NavigationContainer>
               <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>

@@ -35,7 +35,7 @@ export default function SignUpScreen({ navigation, route }) {
                 await setDoc(
                     doc(collection(FIRESTORE, "userSettings"), user.uid),
                     {
-                        adult: false
+                        adult: false,
                     }
                 )
                 

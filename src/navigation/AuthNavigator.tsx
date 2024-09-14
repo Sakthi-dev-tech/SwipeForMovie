@@ -13,10 +13,19 @@ const Stack = createStackNavigator();
 
 export default function AuthNavigator() {
   const { user, setUser } = useContext(AuthContext)
+  const [authenticated, setAuthenticated] = useState<boolean>(false)
 
   // check if this is the first launch to not show the splash screen
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean>(false)
   const [isLoaded, setIsLoaded] = useState<boolean>(false)
+
+  useEffect(() => {
+    if ( user == null || user == 'null' ){
+      setAuthenticated(false)
+    } else {
+      setAuthenticated(true)
+    }
+  }, [user])
 
   useEffect(() => {
     const checkFirstLaunch = async () => {
@@ -40,27 +49,27 @@ export default function AuthNavigator() {
   }, [])
 
   if (isLoaded) {
-    return (
-      <NavigationContainer independent={true}>
-        {
-          user ? (
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              <Stack.Screen name='AppNavigator' component={AppNavigator} options={{ animationEnabled: false }} />
-            </Stack.Navigator>
-          ) : (
-            <Stack.Navigator initialRouteName={isFirstLaunch ? 'SplashScreen' : "SignInScreen"} screenOptions={{ headerShown: false }}>
-            {
-              isFirstLaunch && (
-                <Stack.Screen name='SplashScreen' component={SplashScreen} />
-              )
-            }
-            <Stack.Screen name='SignUpScreen' component={SignUpScreen} options={{ animationEnabled: false }} initialParams={{ roundedContainerForStartingScreenHeightRatio: 0 }} />
-            <Stack.Screen name='SignInScreen' component={SignInScreen} options={{ animationEnabled: false }} initialParams={{ roundedContainerForStartingScreenHeightRatio: 0 }} />
+    if (!authenticated) {
+      return (
+        <Stack.Navigator initialRouteName={isFirstLaunch ? 'SplashScreen' : "SignInScreen"} screenOptions={{ headerShown: false }}>
+          {
+            isFirstLaunch && (
+              <Stack.Screen name='SplashScreen' component={SplashScreen} />
+            )
+          }
+          <Stack.Screen name='SignUpScreen' component={SignUpScreen} options={{ animationEnabled: false }} initialParams={{ roundedContainerForStartingScreenHeightRatio: 0 }} />
+          <Stack.Screen name='SignInScreen' component={SignInScreen} options={{ animationEnabled: false }} initialParams={{ roundedContainerForStartingScreenHeightRatio: 0 }} />
+        </Stack.Navigator>
+      )
+    } else {
+      return (
+        <NavigationContainer independent={true}>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name='AppNavigator' component={AppNavigator} options={{ animationEnabled: false }} />
           </Stack.Navigator>
-          )
-        }
-      </NavigationContainer>
-    );
+        </NavigationContainer>
+      );
+    }
   }
 }
 
