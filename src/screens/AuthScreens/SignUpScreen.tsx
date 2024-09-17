@@ -36,6 +36,7 @@ export default function SignUpScreen({ navigation, route }) {
                     doc(collection(FIRESTORE, "userSettings"), user.uid),
                     {
                         adult: false,
+                        temperature: 0.75,
                     }
                 )
                 
@@ -44,6 +45,13 @@ export default function SignUpScreen({ navigation, route }) {
                     {
                         username: username,
                         email: email,
+                    }
+                )
+
+                await setDoc(
+                    doc(collection(FIRESTORE, "userFollowing"), user.uid),
+                    {
+                        following: []
                     }
                 )
 

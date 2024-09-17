@@ -10,6 +10,7 @@ import { FIRESTORE } from '../../../../firebase.config'
 import AuthContext from '../../../contexts/AuthContext'
 import Slider from '@react-native-community/slider'
 import { useIsFocused } from '@react-navigation/native'
+import { Picker } from '@react-native-picker/picker'
 
 
 const SettingsScreen = ({ navigation }) => {
@@ -18,12 +19,19 @@ const SettingsScreen = ({ navigation }) => {
   const { user, appState } = useContext(AuthContext)
   const isFocused = useIsFocused()
   const [temperature, setTemperature] = useState(temperatureForMovieRecommendation)
+  const [selectedLabel, setSelectedLabel] = useState<string>('');
 
   useEffect(() => {
     if (!isFocused || !(appState === 'active')) {
       setTemperatureForMovieRecommendations(temperature)
     }
   }, [isFocused, appState])
+
+  const temperatureDropdown = [
+    { label: 'Very Similar', value: 0.90 },
+    { label: 'Similar', value: 0.75 },
+    { label: 'Somewhat Similar', value: 0.60 }
+  ]
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -38,23 +46,21 @@ const SettingsScreen = ({ navigation }) => {
         <View style={styles.contentSettingContainer}>
           <Text style={styles.settingsHeader}>Movie Recommendation</Text>
 
-          <View style={[styles.specificSettingSection, { height: 85, flexDirection: 'column', justifyContent: 'center' }]}>
-            <View style={{ flexDirection: 'row' }}>
-              <Text style={{ color: COLOURS.orange, fontFamily: "BrandonGrotesqueMedium" }}>Similarity To Your Favourite Movies: </Text>
-              <Text style={{color: COLOURS.orange, fontFamily: "PoppinsBold", marginLeft: 10}}>{temperature.toFixed(2).toString()}</Text>
-            </View>
-            <Slider
-              style={{ width: 300, height: 40 }}
-              minimumValue={0}
-              maximumValue={0.99}
-              minimumTrackTintColor={COLOURS.orange}
-              maximumTrackTintColor="#D3D3D3"
-              thumbTintColor={COLOURS.orange}
-              value={temperature}
-              onValueChange={(sliderValue) => {
-                setTemperature(parseFloat(sliderValue.toFixed(2)))
+          <View style={[styles.specificSettingSection, { height: 50 }]}>
+            <Text style={{ color: COLOURS.orange, fontFamily: 'BrandonGrotesqueMedium' }}>Recommendation Similarity</Text>
+            <Picker
+              selectedValue={selectedLabel}
+              onValueChange={(itemValue, itemIndex) => {
+                setSelectedLabel(temperatureDropdown[itemIndex].label)
+                setTemperature(temperatureDropdown[itemIndex].value)
               }}
-            />
+              style={styles.picker}
+              dropdownIconColor={COLOURS.orange}
+            >
+              {temperatureDropdown.map((option) => (
+                <Picker.Item key={option.value} label={option.label} value={option.value} />
+              ))}
+            </Picker>
           </View>
         </View>
 
@@ -133,6 +139,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     height: 50,
     alignItems: 'center',
-    flexDirection: 'row'
-  }
+    flexDirection: 'row',
+  },
+
+  picker: {
+    height: 50,
+    width: '30%'
+  },
 })

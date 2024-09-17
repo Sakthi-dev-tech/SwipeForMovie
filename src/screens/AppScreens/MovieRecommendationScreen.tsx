@@ -93,6 +93,7 @@ const MovieRecommendationScreen = (props) => {
 
     if (error) {
       console.error(error)
+      alert("Oh no! Something went wrong! Try again!")
     }
 
     if (data.length === 0){
@@ -112,6 +113,7 @@ const MovieRecommendationScreen = (props) => {
 
       if (error) {
         console.error(error)
+        alert("Oh no! Something went wrong! Try again!")
       }
 
       if (data) {
@@ -179,10 +181,10 @@ const MovieRecommendationScreen = (props) => {
   }
 
   useEffect(() => {
-    if (nextCardIndex === Infinity) {
+    if (currCardindex === Infinity) {
       setUpdateRecommendedMovies(true)
     }
-  }, [nextCardIndex])
+  }, [currCardindex])
 
   const pan = Gesture.Pan()
     .onChange((event) => {

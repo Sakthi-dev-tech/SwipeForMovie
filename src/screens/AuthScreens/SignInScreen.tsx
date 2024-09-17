@@ -66,6 +66,7 @@ export default function SignInScreen({ navigation, route }) {
                                 <View style={styles.textInputContainer}>
                                     <Entypo style={styles.icon} name='email' color={COLOURS.orange} size={25} />
                                     <TextInput
+                                        cursorColor={COLOURS.orange}
                                         style={styles.textInput}
                                         placeholder='Email'
                                         keyboardType='email-address'
@@ -78,6 +79,7 @@ export default function SignInScreen({ navigation, route }) {
                                 <View style={styles.textInputContainer}>
                                     <AntDesign style={styles.icon} name='lock' color={COLOURS.orange} size={25} />
                                     <TextInput
+                                        cursorColor={COLOURS.orange}
                                         style={styles.textInput}
                                         placeholder='Password'
                                         secureTextEntry

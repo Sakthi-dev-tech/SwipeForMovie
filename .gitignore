@@ -41,6 +41,8 @@ yarn-error.*
 
 # dependencies
 node_modules/
+src/api
+src/Embeddings/SupabaseAPIKeys
 
 # Expo
 .expo/

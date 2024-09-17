@@ -8,16 +8,87 @@ import PopularAndUpcomingMovieCard from '../../components/ForHomepage/PopularAnd
 import { screenDimensions } from '../../constants/screenDimensions'
 import NowPlayingMovieCard from '../../components/ForHomepage/NowPlayingMovieCard'
 import SettingsContext from '../../contexts/SettingsContext'
+import FriendProfileContainer from '../../components/ForHomepage/FriendProfileContainer'
+import FriendFavouriteMovies from '../../components/ForHomepage/FriendFavouriteMovies'
+import { doc, getDoc } from 'firebase/firestore'
+import { FIRESTORE } from '../../../firebase.config'
+import AuthContext from '../../contexts/AuthContext'
+import { supabase } from '../../supabase'
 
 const HomeScreen = ({ navigation }) => {
 
     const { showAdultFilms } = useContext(SettingsContext)
+    const {user} = useContext(AuthContext)
+
+    const scrollViewRef = useRef<any>(null)
 
     const [nowPlayingMoviesList, setNowPlayingMoviesList] = useState<any>(undefined)
     const [popularMoviesList, setPopularMoviesList] = useState<any>(undefined)
     const [upcomingMoviesList, setUpcomingMoviesList] = useState<any>(undefined)
-    const [searchQuery, setSearchQuery] = useState<string>('')
+    
+    // these are the data to use for the Friends row
+    const [friendUID, setFriendUID] = useState<string>('')
+    const [listOfFriendUID, setListOfFriendUID] = useState<string[]>([])
+    const [friendFavMovies, setFriendFavMovies] = useState<any>(null)
+    
+    const animatedHeightForFriendLikedMoviesContainer = useRef(new Animated.Value(0)).current;
 
+    useEffect(() => {
+        const fetchFriendsList = async () => {
+            await getDoc(doc(FIRESTORE, 'userFollowing', user?.uid)).then((snapshot) => {
+                if (snapshot.exists()){
+                    setListOfFriendUID(snapshot.get("following"))
+                }
+            })
+        }
+
+        fetchFriendsList();
+    }, [])
+
+    useEffect(() => {
+        const getMoviesLikedByFriend = async() => {
+            if (friendUID){
+                const { data, error } = await supabase
+                .from("UsersMovieData")
+                .select('liked_movies')
+                .eq("userID", friendUID)
+
+                if (error) {
+                    console.error(error)
+                }
+
+                if (data) {
+                    setFriendFavMovies(data[0].liked_movies)
+                }
+            } else {
+                setFriendFavMovies(null)
+            }
+        }
+
+        getMoviesLikedByFriend();
+    }, [friendUID])
+
+    useEffect(() => {
+        if(friendFavMovies !== null) {
+            Animated.timing(animatedHeightForFriendLikedMoviesContainer, {
+                toValue: screenDimensions.screenWidth / 2 + 10,
+                duration: 300,
+                useNativeDriver: false
+            }).start(() => {
+                if (scrollViewRef.current) {
+                    scrollViewRef?.current.scrollToEnd({animated: true})
+                }
+            });
+        } else {
+            Animated.timing(animatedHeightForFriendLikedMoviesContainer, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: false
+            }).start();
+        }
+    }, [friendFavMovies])
+
+    // this is the data for all the Now Playing, Popular and Upcoming movies
     const getNowPlayingMoviesList = async () => {
         try {
             let response = await fetch(movies('now_playing', showAdultFilms))
@@ -107,6 +178,7 @@ const HomeScreen = ({ navigation }) => {
                     </Animated.View>
 
                     <Animated.ScrollView
+                        ref={scrollViewRef}
                         bounces={false}
                         style={{ flex: 1, paddingTop: 40 }}
                         onScroll={
@@ -203,6 +275,65 @@ const HomeScreen = ({ navigation }) => {
                                 }}
                             />}
                         />
+
+                        <Text style={styles.headerText}>Following's Liked Movies</Text>
+                        <FlatList 
+                            style={{marginTop: 10}}
+                            data={listOfFriendUID}
+                            renderItem={({item, index}) => {                                
+                                return(
+                                <TouchableOpacity 
+                                onPress={() => {
+                                    // if already selected, deselect it
+                                    if (item === friendUID) {
+                                        setFriendUID('')
+                                    } else {
+                                        // if not selected, select it
+                                        setFriendUID(item)
+                                    }
+                                }}
+                                style={[{
+                                    aspectRatio: 1,
+                                    height: 100,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    borderRadius: 20,
+                                }, index == 0 ? {marginLeft: 20} : index == listOfFriendUID?.length - 1 ? {marginRight: 20} : {}
+                                , item === friendUID ? {backgroundColor: COLOURS.orange} : {}
+                                ]}>                                    
+                                    <FriendProfileContainer 
+                                        displayedFriendUID={item}
+                                    />
+                                </TouchableOpacity>
+                            )
+                            } 
+                        }
+                            horizontal
+                        />
+                        <Animated.View style={[styles.friendMoviesContainer, {height: animatedHeightForFriendLikedMoviesContainer}]}>
+                            <FlatList 
+                                data={friendFavMovies}
+                                horizontal
+                                keyExtractor={(item) => item.id.toString()}
+                                style={{marginTop: 5}}
+                                contentContainerStyle={{ gap: 36 }}
+                                renderItem={({ item, index }) => <FriendFavouriteMovies
+                                    cardWidth={screenDimensions.screenWidth / 3}
+                                    isFirst={index == 0 ? true : false}
+                                    isLast={index == friendFavMovies?.length - 1 ? true : false}
+                                    title={item.title}
+                                    imagePath={baseImagePath("w300", item.poster_path)}
+                                    cardFunction={() => {
+                                        navigation.navigate('MovieDetails', {
+                                            fromSearchScreen: false,
+                                            movieID: item.id,
+                                            backdropPath: baseImagePath("w780", item.backdrop_path),
+                                            posterPath: baseImagePath("w500", item.poster_path)
+                                        })
+                                    }}
+                                />}
+                            />
+                        </Animated.View>
                         <View
                             style={{ height: 140 }}
                         />
@@ -243,4 +374,9 @@ const styles = StyleSheet.create({
     flatLists: {
         marginVertical: 10
     },
+
+    friendMoviesContainer: {
+        backgroundColor: COLOURS.orange,
+        marginTop: 20
+    }
 })

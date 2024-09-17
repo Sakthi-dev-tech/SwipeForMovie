@@ -21,11 +21,6 @@ const DeleteAccountModal = (props) => {
                 alignItems: 'center',
                 justifyContent: 'center',
             }}>
-                <TouchableOpacity style={[styles.goBackIconContainer]} onPress={() => {
-                    props.setShowModal(false)
-                }}>
-                    <Entypo name='chevron-with-circle-left' color={'white'} size={30} />
-                </TouchableOpacity>
 
                 <View style={styles.container}>
                     <Text style={styles.header}>Delete Account</Text>
