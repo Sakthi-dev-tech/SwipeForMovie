@@ -10,7 +10,7 @@ import NowPlayingMovieCard from '../../components/ForHomepage/NowPlayingMovieCar
 import SettingsContext from '../../contexts/SettingsContext'
 import FriendProfileContainer from '../../components/ForHomepage/FriendProfileContainer'
 import FriendFavouriteMovies from '../../components/ForHomepage/FriendFavouriteMovies'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { FIRESTORE } from '../../../firebase.config'
 import AuthContext from '../../contexts/AuthContext'
 import { supabase } from '../../supabase'
@@ -18,40 +18,42 @@ import { supabase } from '../../supabase'
 const HomeScreen = ({ navigation }) => {
 
     const { showAdultFilms } = useContext(SettingsContext)
-    const {user} = useContext(AuthContext)
+    const { user } = useContext(AuthContext)
 
     const scrollViewRef = useRef<any>(null)
 
     const [nowPlayingMoviesList, setNowPlayingMoviesList] = useState<any>(undefined)
     const [popularMoviesList, setPopularMoviesList] = useState<any>(undefined)
     const [upcomingMoviesList, setUpcomingMoviesList] = useState<any>(undefined)
-    
+
     // these are the data to use for the Friends row
     const [friendUID, setFriendUID] = useState<string>('')
     const [listOfFriendUID, setListOfFriendUID] = useState<string[]>([])
     const [friendFavMovies, setFriendFavMovies] = useState<any>(null)
-    
+
     const animatedHeightForFriendLikedMoviesContainer = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         const fetchFriendsList = async () => {
-            await getDoc(doc(FIRESTORE, 'userFollowing', user?.uid)).then((snapshot) => {
-                if (snapshot.exists()){
+            const unsubscribe = onSnapshot(doc(FIRESTORE, 'userFollowing', user?.uid), (snapshot) => {
+                if (snapshot.exists()) {
                     setListOfFriendUID(snapshot.get("following"))
                 }
             })
+
+            return () => unsubscribe();
         }
 
         fetchFriendsList();
     }, [])
 
     useEffect(() => {
-        const getMoviesLikedByFriend = async() => {
-            if (friendUID){
+        const getMoviesLikedByFriend = async () => {
+            if (friendUID) {
                 const { data, error } = await supabase
-                .from("UsersMovieData")
-                .select('liked_movies')
-                .eq("userID", friendUID)
+                    .from("UsersMovieData")
+                    .select('liked_movies')
+                    .eq("userID", friendUID)
 
                 if (error) {
                     console.error(error)
@@ -69,14 +71,14 @@ const HomeScreen = ({ navigation }) => {
     }, [friendUID])
 
     useEffect(() => {
-        if(friendFavMovies !== null) {
+        if (friendFavMovies !== null) {
             Animated.timing(animatedHeightForFriendLikedMoviesContainer, {
                 toValue: screenDimensions.screenWidth / 2 + 10,
                 duration: 300,
                 useNativeDriver: false
             }).start(() => {
                 if (scrollViewRef.current) {
-                    scrollViewRef?.current.scrollToEnd({animated: true})
+                    scrollViewRef?.current.scrollToEnd({ animated: true })
                 }
             });
         } else {
@@ -159,7 +161,7 @@ const HomeScreen = ({ navigation }) => {
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <ImageBackground style={{ flex: 1 }} source={require('../../assets/background.png')}>
-                <View style={{ flex: 1, marginTop: screenDimensions.StatusBarHeight}}>
+                <View style={{ flex: 1, marginTop: screenDimensions.StatusBarHeight }}>
                     <Animated.View style={[styles.searchMovieContainer, {
                         opacity: scrollY.interpolate({
                             inputRange: [0, 250],
@@ -266,7 +268,7 @@ const HomeScreen = ({ navigation }) => {
                                 title={item.original_title}
                                 imagePath={baseImagePath("w185", item.poster_path)}
                                 cardFunction={() => {
-                                    navigation.navigate('MovieDetails', { 
+                                    navigation.navigate('MovieDetails', {
                                         movieID: item.id,
                                         fromSearchScreen: false,
                                         backdropPath: baseImagePath("w780", item.backdrop_path),
@@ -277,62 +279,75 @@ const HomeScreen = ({ navigation }) => {
                         />
 
                         <Text style={styles.headerText}>Following's Liked Movies</Text>
-                        <FlatList 
-                            style={{marginTop: 10}}
+                        <FlatList
+                            style={{ marginTop: 10 }}
                             data={listOfFriendUID}
-                            renderItem={({item, index}) => {                                
-                                return(
-                                <TouchableOpacity 
-                                onPress={() => {
-                                    // if already selected, deselect it
-                                    if (item === friendUID) {
-                                        setFriendUID('')
-                                    } else {
-                                        // if not selected, select it
-                                        setFriendUID(item)
-                                    }
-                                }}
-                                style={[{
-                                    aspectRatio: 1,
-                                    height: 100,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    borderRadius: 20,
-                                }, index == 0 ? {marginLeft: 20} : index == listOfFriendUID?.length - 1 ? {marginRight: 20} : {}
-                                , item === friendUID ? {backgroundColor: COLOURS.orange} : {}
-                                ]}>                                    
-                                    <FriendProfileContainer 
-                                        displayedFriendUID={item}
-                                    />
-                                </TouchableOpacity>
-                            )
-                            } 
-                        }
+                            renderItem={({ item, index }) => {
+                                return (
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            // if already selected, deselect it
+                                            if (item === friendUID) {
+                                                setFriendUID('')
+                                            } else {
+                                                // if not selected, select it
+                                                setFriendUID(item)
+                                            }
+                                        }}
+                                        style={[{
+                                            aspectRatio: 1,
+                                            height: 100,
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            borderRadius: 20,
+                                        }, index == 0 ? { marginLeft: 20 } : index == listOfFriendUID?.length - 1 ? { marginRight: 20 } : {}
+                                            , item === friendUID ? { backgroundColor: COLOURS.orange } : {}
+                                        ]}>
+                                        <FriendProfileContainer
+                                            displayedFriendUID={item}
+                                        />
+                                    </TouchableOpacity>
+                                )
+                            }
+                            }
                             horizontal
                         />
-                        <Animated.View style={[styles.friendMoviesContainer, {height: animatedHeightForFriendLikedMoviesContainer}]}>
-                            <FlatList 
-                                data={friendFavMovies}
-                                horizontal
-                                keyExtractor={(item) => item.id.toString()}
-                                style={{marginTop: 5}}
-                                contentContainerStyle={{ gap: 36 }}
-                                renderItem={({ item, index }) => <FriendFavouriteMovies
-                                    cardWidth={screenDimensions.screenWidth / 3}
-                                    isFirst={index == 0 ? true : false}
-                                    isLast={index == friendFavMovies?.length - 1 ? true : false}
-                                    title={item.title}
-                                    imagePath={baseImagePath("w300", item.poster_path)}
-                                    cardFunction={() => {
-                                        navigation.navigate('MovieDetails', {
-                                            fromSearchScreen: false,
-                                            movieID: item.id,
-                                            backdropPath: baseImagePath("w780", item.backdrop_path),
-                                            posterPath: baseImagePath("w500", item.poster_path)
-                                        })
-                                    }}
-                                />}
-                            />
+                        <Animated.View style={[styles.friendMoviesContainer, { height: animatedHeightForFriendLikedMoviesContainer }, friendFavMovies && friendFavMovies.length === 0 ? { justifyContent: 'center', alignItems: 'center' } : {}]}>
+                            {
+                                friendFavMovies && friendFavMovies.length > 0 ? (
+                                    <FlatList
+                                        data={friendFavMovies}
+                                        horizontal
+                                        keyExtractor={(item) => item.id.toString()}
+                                        style={{ marginTop: 5 }}
+                                        contentContainerStyle={{ gap: 36 }}
+                                        renderItem={({ item, index }) => <FriendFavouriteMovies
+                                            cardWidth={screenDimensions.screenWidth / 3}
+                                            isFirst={index == 0 ? true : false}
+                                            isLast={index == friendFavMovies?.length - 1 ? true : false}
+                                            title={item.title}
+                                            imagePath={baseImagePath("w300", item.poster_path)}
+                                            cardFunction={() => {
+                                                navigation.navigate('MovieDetails', {
+                                                    fromSearchScreen: false,
+                                                    movieID: item.id,
+                                                    backdropPath: baseImagePath("w780", item.backdrop_path),
+                                                    posterPath: baseImagePath("w500", item.poster_path)
+                                                })
+                                            }}
+                                        />}
+                                    />
+                                ) : (
+                                    <Text style={[{
+                                        fontSize: 20,
+                                        fontFamily: 'PoppinsBold'
+                                    }, 
+                                    // ensures that the text is not seen when closing the animated view for better UI
+                                    friendUID === '' ? { color: 'transparent' } : { color: 'black' }]}>
+                                        This user has no liked movies yet!
+                                    </Text>
+                                )
+                            }
                         </Animated.View>
                         <View
                             style={{ height: 140 }}
@@ -377,6 +392,6 @@ const styles = StyleSheet.create({
 
     friendMoviesContainer: {
         backgroundColor: COLOURS.orange,
-        marginTop: 20
+        marginTop: 20,
     }
 })

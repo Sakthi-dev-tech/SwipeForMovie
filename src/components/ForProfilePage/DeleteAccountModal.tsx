@@ -1,13 +1,74 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import { ActivityIndicator, ImageBackground, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import React, { useContext, useState } from 'react'
 import { COLOURS } from '../../theme/theme'
 import { screenDimensions } from '../../constants/screenDimensions'
 import Entypo from 'react-native-vector-icons/Entypo'
+import { deleteUser } from 'firebase/auth'
+import AuthContext from '../../contexts/AuthContext'
+import { deleteDoc, doc } from 'firebase/firestore'
+import { FIRESTORE } from '../../../firebase.config'
+import { supabase } from '../../Embeddings/supabase'
 
 const DeleteAccountModal = (props) => {
 
-    function handleDeleteAccount() {
+    const { user } = useContext(AuthContext)
+    const [deletingAcc, setDeletingAcc] = useState<boolean>(false)
+
+    async function handleDeleteAccount() {
+        try {
+            setDeletingAcc(true)
     
+            await deleteDoc(doc(FIRESTORE, 'userFollowing', user.uid))
+            await deleteDoc(doc(FIRESTORE, 'userInfo', user.uid))
+            await deleteDoc(doc(FIRESTORE, 'userSettings', user.uid))
+            
+            // delete information from supabase
+            const {data, error} = await supabase
+            .from("UsersMovieData")
+            .delete()
+            .eq("userID", user.uid)
+
+            if (error) {
+                console.error(error)
+                alert("Something went wrong while deleting your account!")
+            }
+
+            // delete account from firestore auth
+            await deleteUser(user)
+
+            alert("Account deleted successfully!")
+        } catch (err) {
+            if (err) {
+                console.error(err)
+                alert("Something went wrong while deleting your account!")
+            }
+        } finally {
+            setDeletingAcc(false)
+        }
+
+    }
+
+    if (deletingAcc) {
+        return (
+            <Modal
+                visible={deletingAcc}
+            >
+            <ImageBackground source={require("../../assets/background.png")} style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+                <ActivityIndicator 
+                    style={{backgroundColor: 'transparent'}}
+                    color={COLOURS.orange}
+                    size={'large'}
+                />
+
+                <Text style={{
+                    color: COLOURS.orange,
+                    marginTop: 20,
+                    fontSize: 15,
+                    fontFamily: "Lato"
+                }}>Account being deleted! Please wait!</Text>
+            </ImageBackground>
+            </Modal>
+        )
     }
 
     return (

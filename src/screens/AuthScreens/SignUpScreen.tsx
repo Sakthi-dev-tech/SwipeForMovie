@@ -36,7 +36,7 @@ export default function SignUpScreen({ navigation, route }) {
                     doc(collection(FIRESTORE, "userSettings"), user.uid),
                     {
                         adult: false,
-                        temperature: 0.75,
+                        temperature: 0.70,
                     }
                 )
                 

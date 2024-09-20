@@ -1,28 +1,137 @@
-import { Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { Alert, Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import React, { useContext, useEffect, useState } from 'react'
 import { ImageBackground } from 'react-native'
 import { COLOURS } from '../../../theme/theme'
 import { screenDimensions } from '../../../constants/screenDimensions'
 import Entypo from 'react-native-vector-icons/Entypo'
+import * as ImagePicker from 'expo-image-picker'
 
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import { Modal } from 'react-native'
 import DeleteAccountModal from '../../../components/ForProfilePage/DeleteAccountModal'
+import AuthContext from '../../../contexts/AuthContext'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { FIRESTORE, STORAGE } from '../../../../firebase.config'
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword } from 'firebase/auth'
+import { FirebaseError } from 'firebase/app'
 
 const EditProfileScreen = ({ navigation }) => {
 
   const [imageURI, setImageURI] = useState<string | undefined>(undefined)
-  const [username, setUsername] = useState<string | undefined>(undefined)
-  const [password, setPassword] = useState<string | undefined>(undefined)
+  const [username, setUsername] = useState<string>('')
+  const [isEditing, setIsEditing] = useState(false); // Flag to track if user is editing
+
+  const [currentPassword, setCurrentPassword] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
+  const [profileImageChanged, setProfileImageChanged] = useState<boolean>(true)
+
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState<boolean>(false)
   const [showDeleteAccModal, setShowDeleteAccModal] = useState<boolean>(false)
 
-  function handleChangeAvatar() {
+  const { user } = useContext(AuthContext)
 
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      const reference = ref(STORAGE, `gs://swipeformovie.appspot.com/profileImages/${user.uid}.jpg`)
+      await getDownloadURL(reference).then((uri) => {
+        setImageURI(uri)
+        setProfileImageChanged(false)
+      })
+    }
+
+    if (profileImageChanged) {
+      fetchProfileImage();
+    }
+  }, [profileImageChanged])
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(FIRESTORE, 'userInfo', user.uid), (snapshot) => {
+      if (snapshot.exists() && !isEditing) {
+        setUsername(snapshot.get("username"))
+      }
+    })
+
+    return () => unsubscribe();
+  })
+
+  async function handleChangeAvatar() {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled) {
+
+      const uid = user.uid
+
+      const reference = ref(STORAGE, `profileImages/${uid}.jpg`)
+
+      const img = await fetch(result.assets[0].uri)
+      const bytes = await img.blob(); //convert the image to array of bytes
+
+      await uploadBytes(reference, bytes).then(() => {
+        setProfileImageChanged(true)
+      }).catch((err) => {
+        Alert.alert("Error in uploading image", "There has been an error in uploading this image. Please do try again!")
+        console.error(err)
+      }) //upload the bytes to firebase storage
+    }
   }
 
-  function handleSubmitChangePW() {
+  async function handleSubmitChangePW() {
+    if (currentPassword.length === 0 || password.length === 0 || confirmPassword.length === 0) {
+      alert("Please ensure that you have all the fields filled up!")
+    } else if (password !== confirmPassword){
+      Alert.alert("Passwords do not match!", "Ensure your passwords match!")
+    } else {
+      try {
+        // Re-authenticate the user with their current credentials
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    
+        await reauthenticateWithCredential(user, credential);
+        if (currentPassword === password) {
+          alert("Password already in use currently!")
+          return
+        }
+    
+        // Update the password after re-authentication
+        await updatePassword(user, password)
 
+        alert("Password changed successfully!")
+
+        setCurrentPassword('')
+        setPassword('')
+        setConfirmPassword('')
+        setChangePasswordModalVisible(false)
+      } catch (error) {
+        if (error instanceof FirebaseError) {
+          if (error.code === 'auth/invalid-credential') {
+            alert("Your current password is invalid");
+          } else if (error.code === 'auth/user-mismatch') {
+            alert("Provided credentials do not match any user!");
+          } else if (error.code === 'auth/weak-password') {
+            alert("Passowrd is too weak! Choose a password that is at least 6 characters long!");
+          } else if (error.code === 'auth/too-many-requests') {
+            alert("Too many requests! Try again later!");
+          } else {
+            console.error('Error re-authenticating or updating password: ', error);
+          }
+        }
+      }
+    }
+  }
+
+  async function handleChangeUsername() {
+    await updateDoc(doc(FIRESTORE, 'userInfo', user.uid), {
+      'username': username
+    }).then(() => {
+      setIsEditing(false)
+    })
   }
 
   return (
@@ -40,7 +149,7 @@ const EditProfileScreen = ({ navigation }) => {
           <FontAwesome name='camera' color={'white'} size={20} style={{ position: 'absolute', bottom: 0, right: 0 }} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.usernameEditContainer} onPress={() => handleChangeAvatar()}>
+        <TouchableOpacity style={styles.usernameEditContainer}>
           <TextInput
             value={username}
             placeholder='Your username...'
@@ -48,7 +157,9 @@ const EditProfileScreen = ({ navigation }) => {
             cursorColor={COLOURS.orange}
             textAlign='center'
             placeholderTextColor={'gray'}
+            onFocus={() => setIsEditing(true)}
             onChangeText={(text) => setUsername(text)}
+            onEndEditing={async () => await handleChangeUsername()}
           />
           <FontAwesome name='pencil' color={'white'} size={20} style={{ position: 'absolute', bottom: 2, right: -20 }} />
         </TouchableOpacity>
@@ -110,8 +221,9 @@ const EditProfileScreen = ({ navigation }) => {
                 fontSize: 20,
                 color: COLOURS.orange,
                 marginLeft: 10
-              }}>Enter your new password</Text>
+              }}>Enter your current password</Text>
               <TextInput
+                value={currentPassword}
                 style={{
                   width: '94%',
                   alignSelf: 'center',
@@ -124,6 +236,29 @@ const EditProfileScreen = ({ navigation }) => {
                 secureTextEntry
                 placeholder='Enter here...'
                 placeholderTextColor={'white'}
+                onChangeText={(text) => setCurrentPassword(text)}
+              />
+              <Text style={{
+                fontFamily: "Poppins",
+                fontSize: 20,
+                color: COLOURS.orange,
+                marginLeft: 10
+              }}>Enter your new password</Text>
+              <TextInput
+                value={password}
+                style={{
+                  width: '94%',
+                  alignSelf: 'center',
+                  backgroundColor: 'transparent',
+                  fontFamily: 'Lato',
+                  color: COLOURS.orange,
+                  marginBottom: 10
+                }}
+                cursorColor={COLOURS.orange}
+                secureTextEntry
+                placeholder='Enter here...'
+                placeholderTextColor={'white'}
+                onChangeText={(text) => setPassword(text)}
               />
 
               <Text style={{
@@ -132,7 +267,8 @@ const EditProfileScreen = ({ navigation }) => {
                 color: COLOURS.orange,
                 marginLeft: 10
               }}>Re-enter your new password</Text>
-              <TextInput 
+              <TextInput
+                value={confirmPassword}
                 style={{
                   width: '94%',
                   alignSelf: 'center',
@@ -143,17 +279,18 @@ const EditProfileScreen = ({ navigation }) => {
                 secureTextEntry
                 placeholder='Enter here...'
                 placeholderTextColor={'white'}
+                onChangeText={(text) => setConfirmPassword(text)}
               />
             </View>
           </View>
         </Modal>
 
-        <Text 
-        style={styles.deleteAccountText}
-        onPress={() => setShowDeleteAccModal(true)}
+        <Text
+          style={styles.deleteAccountText}
+          onPress={() => setShowDeleteAccModal(true)}
         >Delete Account</Text>
 
-        <DeleteAccountModal 
+        <DeleteAccountModal
           showModal={showDeleteAccModal}
           setShowModal={setShowDeleteAccModal}
         />

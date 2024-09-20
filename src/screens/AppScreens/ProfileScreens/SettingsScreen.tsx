@@ -28,9 +28,9 @@ const SettingsScreen = ({ navigation }) => {
   }, [isFocused, appState])
 
   const temperatureDropdown = [
-    { label: 'Very Similar', value: 0.90 },
-    { label: 'Similar', value: 0.75 },
-    { label: 'Somewhat Similar', value: 0.60 }
+    { label: 'Very Similar', value: 0.85 },
+    { label: 'Similar', value: 0.70 },
+    { label: 'Somewhat Similar', value: 0.55 }
   ]
 
   return (

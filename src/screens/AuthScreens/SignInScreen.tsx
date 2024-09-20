@@ -9,6 +9,7 @@ import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { AUTH } from '../../../firebase.config';
 import AuthContext from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FirebaseError } from 'firebase/app';
 
 export default function SignInScreen({ navigation, route }) {
 
@@ -43,9 +44,25 @@ export default function SignInScreen({ navigation, route }) {
     }, [isReady])
 
     async function handleSignIn() {
-        await signInWithEmailAndPassword(AUTH, email, password).then(async (userCreds) => {
-            setUser(getAuth().currentUser)
-        });
+        try {
+            await signInWithEmailAndPassword(AUTH, email, password).then(async (userCreds) => {
+                setUser(getAuth().currentUser)
+            });
+        } catch (error) {
+            if (error instanceof FirebaseError) {
+                if (error.code === 'auth/invalid-credential') {
+                    alert("Your current password is invalid");
+                } else if (error.code === 'auth/user-mismatch') {
+                    alert("Provided credentials do not match any user!");
+                } else if (error.code === 'auth/weak-password') {
+                    alert("Passowrd is too weak! Choose a password that is at least 6 characters long!");
+                } else if (error.code === 'auth/too-many-requests') {
+                    alert("Too many requests! Try again later!");
+                } else {
+                    console.error('Error re-authenticating or updating password: ', error);
+                }
+            }
+        }
 
     }
 
