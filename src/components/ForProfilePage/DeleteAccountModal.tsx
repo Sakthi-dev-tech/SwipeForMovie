@@ -6,8 +6,9 @@ import Entypo from 'react-native-vector-icons/Entypo'
 import { deleteUser } from 'firebase/auth'
 import AuthContext from '../../contexts/AuthContext'
 import { deleteDoc, doc } from 'firebase/firestore'
-import { FIRESTORE } from '../../../firebase.config'
+import { FIRESTORE, STORAGE } from '../../../firebase.config'
 import { supabase } from '../../Embeddings/supabase'
+import { deleteObject, ref } from 'firebase/storage'
 
 const DeleteAccountModal = (props) => {
 
@@ -17,10 +18,14 @@ const DeleteAccountModal = (props) => {
     async function handleDeleteAccount() {
         try {
             setDeletingAcc(true)
-    
+            
+            // delete user information from firebase
             await deleteDoc(doc(FIRESTORE, 'userFollowing', user.uid))
             await deleteDoc(doc(FIRESTORE, 'userInfo', user.uid))
             await deleteDoc(doc(FIRESTORE, 'userSettings', user.uid))
+
+            // delete user profile picture
+            await deleteObject(ref(STORAGE, `gs://swipeformovie.appspot.com/profileImages/${user.uid}.jpg`))
             
             // delete information from supabase
             const {data, error} = await supabase

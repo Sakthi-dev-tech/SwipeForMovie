@@ -262,7 +262,7 @@ const MovieDetailsScreen = ({ navigation, route }) => {
             </View>
 
             <View style={styles.ratingContainer}>
-              <Image source={require('../../assets/ratingIcon.png')} style={{ width: 18, height: 18 }} />
+              <Image source={require('../../assets/icons/ratingIcon.png')} style={{ width: 18, height: 18 }} />
               <Text style={{ color: 'white', marginLeft: 5 }}>{movieDetailsData.vote_average} ({movieDetailsData.vote_count})</Text>
             </View>
           </View>

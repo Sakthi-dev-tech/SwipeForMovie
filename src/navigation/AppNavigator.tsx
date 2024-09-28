@@ -82,7 +82,7 @@ const AppNavigator = () => {
                                 borderRadius: 50,
                             }}>
                                 <Image
-                                    source={require('../assets/filmRollImage.png')}
+                                    source={require('../assets/icons/filmRollImage.png')}
                                     style={{ width: iconSize, height: iconSize, tintColor: focused ? COLOURS.orange : 'black' }}
                                 />
                             </View>

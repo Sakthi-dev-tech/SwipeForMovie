@@ -43,7 +43,7 @@ const NowPlayingMovieCard = (props) => {
             <View style={styles.movieDetailContainer}>
                 <Text style={styles.title}>{props.title}</Text>
                 <View style={styles.ratingContainer}>
-                    <Image source={require('../../assets/ratingIcon.png')} style={{ width: 18, height: 18}}/>
+                    <Image source={require('../../assets/icons/ratingIcon.png')} style={{ width: 18, height: 18}}/>
                     <Text style={{color: 'white', marginLeft: 5}}>{props.vote_average} ({props.vote_count})</Text>
                 </View>
 

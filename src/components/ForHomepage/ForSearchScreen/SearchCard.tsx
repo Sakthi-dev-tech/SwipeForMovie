@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
         aspectRatio: 1/1.8,
         borderRadius: 10,
         marginHorizontal: 10,
-        marginVertical: 30
+        marginVertical: 15
     },
 
     poster: {
