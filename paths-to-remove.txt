@@ -1,0 +1,4 @@
+firebase.config.tsx
+src/api
+src/Embeddings/SupabaseAPIKeys.js
+src/Embeddings/node_modules
