@@ -5,10 +5,9 @@ import { COLOURS } from '../../theme/theme';
 import { screenDimensions } from '../../constants/screenDimensions';
 import Entypo from 'react-native-vector-icons/Entypo'
 import AntDesign from 'react-native-vector-icons/AntDesign'
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { AUTH } from '../../../firebase.config';
 import AuthContext from '../../contexts/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FirebaseError } from 'firebase/app';
 
 export default function SignInScreen({ navigation, route }) {
@@ -24,8 +23,22 @@ export default function SignInScreen({ navigation, route }) {
     const [password, setPassword] = useState('')
 
     useEffect(() => {
+        // Subscribe to the user's authentication state
+        const unsubscribe = onAuthStateChanged(AUTH, (currentUser) => {
+          if (currentUser) {
+            setUser(currentUser);
+          } else {
+            setUser(null); // User is signed out
+          }
+        });
+    
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+      }, [AUTH]);
+
+    useEffect(() => {
         Animated.timing(animatedHeight, {
-            toValue: screenDimensions.screenHeight * 0.50,
+            toValue: screenDimensions.screenHeight * 0.40,
             duration: 500,
             useNativeDriver: false
         }).start(() => {
@@ -59,7 +72,7 @@ export default function SignInScreen({ navigation, route }) {
                 } else if (error.code === 'auth/too-many-requests') {
                     alert("Too many requests! Try again later!");
                 } else {
-                    console.error('Error re-authenticating or updating password: ', error);
+                    console.error('Error in Sign In Screen: ', error);
                 }
             }
         }
@@ -68,7 +81,7 @@ export default function SignInScreen({ navigation, route }) {
 
     function handleNavToSignUp() {
         navigation.replace('SignUpScreen', {
-            roundedContainerForStartingScreenHeightRatio: 0.50
+            roundedContainerForStartingScreenHeightRatio: 0.40
         })
     }
 

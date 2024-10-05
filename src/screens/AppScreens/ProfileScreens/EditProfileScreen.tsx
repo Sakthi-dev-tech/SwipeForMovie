@@ -16,16 +16,18 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 
-const EditProfileScreen = ({ navigation }) => {
+const EditProfileScreen = ({ navigation, route }) => {
 
-  const [imageURI, setImageURI] = useState<string | undefined>(undefined)
+  const {profileImgURI} = route?.params
+
+  const [imageURI, setImageURI] = useState<string | undefined>(profileImgURI)
   const [username, setUsername] = useState<string>('')
   const [isEditing, setIsEditing] = useState(false); // Flag to track if user is editing
 
   const [currentPassword, setCurrentPassword] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [confirmPassword, setConfirmPassword] = useState<string>('')
-  const [profileImageChanged, setProfileImageChanged] = useState<boolean>(true)
+  const [profileImageChanged, setProfileImageChanged] = useState<boolean>(false)
 
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState<boolean>(false)
   const [showDeleteAccModal, setShowDeleteAccModal] = useState<boolean>(false)
@@ -34,7 +36,7 @@ const EditProfileScreen = ({ navigation }) => {
 
   useEffect(() => {
     const fetchProfileImage = async () => {
-      const reference = ref(STORAGE, `gs://swipeformovie.appspot.com/profileImages/${user.uid}.jpg`)
+      const reference = ref(STORAGE, `gs://swipeformovie.appspot.com/profileImages/${user?.uid}.jpg`)
       await getDownloadURL(reference).then((uri) => {
         setImageURI(uri)
         setProfileImageChanged(false)
@@ -47,7 +49,7 @@ const EditProfileScreen = ({ navigation }) => {
   }, [profileImageChanged])
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(FIRESTORE, 'userInfo', user.uid), (snapshot) => {
+    const unsubscribe = onSnapshot(doc(FIRESTORE, 'userInfo', user?.uid), (snapshot) => {
       if (snapshot.exists() && !isEditing) {
         setUsername(snapshot.get("username"))
       }
@@ -67,7 +69,7 @@ const EditProfileScreen = ({ navigation }) => {
 
     if (!result.canceled) {
 
-      const uid = user.uid
+      const uid = user?.uid
 
       const reference = ref(STORAGE, `profileImages/${uid}.jpg`)
 
@@ -127,7 +129,7 @@ const EditProfileScreen = ({ navigation }) => {
   }
 
   async function handleChangeUsername() {
-    await updateDoc(doc(FIRESTORE, 'userInfo', user.uid), {
+    await updateDoc(doc(FIRESTORE, 'userInfo', user?.uid), {
       'username': username
     }).then(() => {
       setIsEditing(false)

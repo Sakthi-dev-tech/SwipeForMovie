@@ -9,6 +9,7 @@ import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } f
 import { AUTH, FIRESTORE } from '../../../firebase.config'
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { supabase } from '../../Embeddings/supabase';
+import { FirebaseError } from 'firebase/app';
 
 export default function SignUpScreen({ navigation, route }) {
 
@@ -28,62 +29,84 @@ export default function SignUpScreen({ navigation, route }) {
     const [confirmPassword, setConfirmPassword] = useState('')
 
     async function handleSignUp() {
-        try {
-            await createUserWithEmailAndPassword(AUTH, email, password).then(async (userCredentials) => {
-                const user = userCredentials.user
-
-                await setDoc(
-                    doc(collection(FIRESTORE, "userSettings"), user.uid),
-                    {
-                        adult: false,
-                        temperature: 0.70,
-                    }
-                )
-                
-                await setDoc(
-                    doc(collection(FIRESTORE, "userInfo"), user.uid),
-                    {
-                        username: username,
-                        email: email,
-                    }
-                )
-
-                await setDoc(
-                    doc(collection(FIRESTORE, "userFollowing"), user.uid),
-                    {
-                        following: []
-                    }
-                )
-
-                const { data, error } = await supabase
-                    .from('UsersMovieData')
-                    .insert([
+        if (username === '' || email === '' || password === '' || confirmPassword === '') {
+            alert("Please ensure all fields are filled up!")
+        } else {
+            try {
+                await createUserWithEmailAndPassword(AUTH, email, password).then(async (userCredentials) => {
+                    const user = userCredentials.user
+    
+                    await setDoc(
+                        doc(collection(FIRESTORE, "userSettings"), user.uid),
                         {
-                            userID: user.uid,
-                            liked_movies: [],
-                            disliked_movies: []
+                            adult: false,
+                            temperature: 0.70,
                         }
-                    ])
-                    .select()
-            })
-        } catch (err) {
-            console.error("Error while signing up by email: ", err)
-        } finally {
-            navigation.replace("SignInScreen", {
-                roundedContainerForStartingScreenHeightRatio: 0.75
-            })
+                    )
+                    
+                    await setDoc(
+                        doc(collection(FIRESTORE, "userInfo"), user.uid),
+                        {
+                            username: username,
+                            email: email,
+                        }
+                    )
+    
+                    await setDoc(
+                        doc(collection(FIRESTORE, "userFollowing"), user.uid),
+                        {
+                            following: []
+                        }
+                    )
+    
+                    const { data, error } = await supabase
+                        .from('UsersMovieData')
+                        .insert([
+                            {
+                                userID: user.uid,
+                                liked_movies: [],
+                                disliked_movies: []
+                            }
+                        ])
+                        .select()
+                })
+            } catch (err) {
+                if (err instanceof FirebaseError) {
+                    if (err.code === 'auth/email-already-in-use'){
+                        alert('Email already in use. Please use a different email.');
+                    }
+                    if (err.code === 'auth/invalid-email'){
+                        alert('Invalid email format. Please provide a valid email address.');
+                    }
+                    if (err.code === 'auth/weak-password'){
+                        alert('Weak password. Please provide a stronger password.');
+                    }
+                    if (err.code === 'auth/operation-not-allowed'){
+                        alert('This sign-up method is not enabled. Please contact support.');
+                    }
+                    if (err.code === 'auth/too-many-requests'){
+                        alert('Too many requests. Please try again later.');
+                    }
+                    console.error("Error while signing up by email: ", err)
+    
+                }
+            } finally {
+                navigation.replace("SignInScreen", {
+                    roundedContainerForStartingScreenHeightRatio: 0.60
+                })
+            }
         }
     }
 
     function handleNavToSignInPage() {
         navigation.replace("SignInScreen", {
-            roundedContainerForStartingScreenHeightRatio: 0.75
+            roundedContainerForStartingScreenHeightRatio: 0.60
         })
     }
 
     useEffect(() => {
         Animated.timing(animatedHeight, {
-            toValue: screenDimensions.screenHeight * 0.75,
+            toValue: screenDimensions.screenHeight * 0.60,
             duration: 500,
             useNativeDriver: false
         }).start(() => {

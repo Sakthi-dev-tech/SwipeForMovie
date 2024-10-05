@@ -1,23 +1,40 @@
 import { View, Text, SafeAreaView, ImageBackground, StyleSheet, Image, TouchableOpacity } from 'react-native'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { screenDimensions } from '../../../constants/screenDimensions'
 import { COLOURS } from '../../../theme/theme'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import Entypo from 'react-native-vector-icons/Entypo'
 import AuthContext from '../../../contexts/AuthContext'
 import { signOut } from 'firebase/auth'
-import { AUTH } from '../../../../firebase.config'
+import { AUTH, STORAGE } from '../../../../firebase.config'
+import { getDownloadURL, ref } from 'firebase/storage'
+import { useIsFocused } from '@react-navigation/native'
 
 const ProfileAndSettingsScreen = ({ navigation }) => {
 
     const [profileImgURI, setProfileImgURI] = useState<string>('')
     const { user, setUser } = useContext(AuthContext)
 
+    const isFocused = useIsFocused();
+
     async function handleSignOut() {
         await signOut(AUTH).then(() => {
             setUser(undefined)
         })
     }
+
+    useEffect(() => {
+        const fetchProfileImage = async () => {
+          const reference = ref(STORAGE, `gs://swipeformovie.appspot.com/profileImages/${user?.uid}.jpg`)
+          await getDownloadURL(reference).then((uri) => {
+            setProfileImgURI(uri)
+          })
+        }
+
+        if (isFocused){
+            fetchProfileImage();
+        }
+      }, [isFocused])
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -28,7 +45,7 @@ const ProfileAndSettingsScreen = ({ navigation }) => {
                     <Entypo name='chevron-with-circle-left' color={'white'} size={30} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.profileContainer} onPress={() => {
-                    navigation.navigate('EditProfile')
+                    navigation.navigate('EditProfile', {profileImgURI: profileImgURI})
                 }}>
 
                     <View style={styles.profilePicAndTextsContainer}>
