@@ -2,6 +2,9 @@
 
 # dependencies
 node_modules/
+src/Embeddings/SupabaseAPIKeys.js
+firebase.config.tsx
+src/api/
 
 # Expo
 .expo/
