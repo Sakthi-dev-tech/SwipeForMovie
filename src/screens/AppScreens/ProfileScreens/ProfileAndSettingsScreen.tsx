@@ -19,7 +19,7 @@ const ProfileAndSettingsScreen = ({ navigation }) => {
 
     async function handleSignOut() {
         await signOut(AUTH).then(() => {
-            setUser(undefined)
+            setUser(null)
         })
     }
 

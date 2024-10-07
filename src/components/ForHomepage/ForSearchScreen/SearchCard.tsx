@@ -2,12 +2,19 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import { baseImagePath } from '../../../api/MovieAPICall'
 import { screenDimensions } from '../../../constants/screenDimensions'
+import { COLOURS } from '../../../theme/theme'
 
 const SearchCard = (props) => {
 
     return (
         <TouchableOpacity style={styles.container} onPress={props.touchFunction}>
-            <Image source={{ uri: baseImagePath('w400', props.posterPath)}} style={styles.poster}/>
+            {
+                props.posterPath ? (
+                    <Image source={{ uri: baseImagePath('w400', props.posterPath)}} style={styles.poster}/>
+                ) :(
+                    <View style={{width: '100%', height: '90%', backgroundColor: COLOURS.secondary, borderRadius: 20}}></View>
+                )
+            }
             <Text style={styles.text}>{props.title}</Text>
         </TouchableOpacity>
     )
@@ -22,14 +29,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         aspectRatio: 1/1.8,
-        borderRadius: 10,
         marginHorizontal: 10,
-        marginVertical: 15
+        marginVertical: 15,
+        overflow: 'hidden'
     },
 
     poster: {
         height: '90%',
         width: '100%',
+        borderRadius: 20
     },
 
     text: {

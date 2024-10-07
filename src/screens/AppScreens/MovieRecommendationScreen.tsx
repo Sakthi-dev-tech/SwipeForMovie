@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, ImageBackground, Image, StyleSheet, ActivityIndicator, AppState, Alert } from 'react-native'
+import { View, Text, SafeAreaView, ImageBackground, Image, StyleSheet, ActivityIndicator } from 'react-native'
 import React, { useContext, useEffect, useState } from 'react'
 import { screenDimensions } from '../../constants/screenDimensions'
 import { COLOURS } from '../../theme/theme'
@@ -11,6 +11,7 @@ import { supabase } from '../../Embeddings/supabase'
 import AuthContext from '../../contexts/AuthContext'
 import { useIsFocused } from '@react-navigation/native'
 import SettingsContext from '../../contexts/SettingsContext'
+import { Snackbar } from 'react-native-paper'
 
 // I need title, overview and poster path
 
@@ -27,6 +28,9 @@ const MovieRecommendationScreen = (props) => {
 
   const { user } = useContext(AuthContext)
   const { showAdultFilms, temperatureForMovieRecommendation } = useContext(SettingsContext)
+
+  const [snackBarMessage, setSnackBarMessage] = useState<string>('');
+  const [snackBarVisible, setSnackBarVisible] = useState<boolean>(false);
 
   const [likedMoviesData, setLikedMoviesData] = useState<any>([])
   const [dislikedMoviesData, setDislikedMoviesData] = useState<any>([])
@@ -50,7 +54,7 @@ const MovieRecommendationScreen = (props) => {
   ));
 
   useEffect(() => {
-    if (!isFocused || !(appState === 'active')){
+    if (!isFocused || !(appState === 'active')) {
       // update the data in supabase when we go out of this screen or app
       const updateTheLikedAndDislikedMoviesInDB = async () => {
         const { data, error } = await supabase
@@ -93,11 +97,13 @@ const MovieRecommendationScreen = (props) => {
 
     if (error) {
       console.error(error)
-      alert("Oh no! Something went wrong! Try again!")
+      setSnackBarMessage("Oh no! Something went wrong! Try again!")
+      setSnackBarVisible(true)
     }
 
-    if (data.length === 0){
-      Alert.alert("No movies found!", "Try reducing the similarity value for movies to be recommended!")
+    if (data.length === 0) {
+      setSnackBarMessage("No movies found! Try reducing the similarity value for movies to be recommended!")
+      setSnackBarVisible(true)
     }
     setListOfRecommendedMovies(data)
   }
@@ -113,7 +119,8 @@ const MovieRecommendationScreen = (props) => {
 
       if (error) {
         console.error(error)
-        alert("Oh no! Something went wrong! Try again!")
+        setSnackBarMessage("Oh no! Something went wrong! Try again!")
+        setSnackBarVisible(true)
       }
 
       if (data) {
@@ -313,10 +320,10 @@ const MovieRecommendationScreen = (props) => {
     fetchDislikedMovies();
   }, [isFocused])
 
-  if (likedMoviesData && likedMoviesData.length === 0){
-    return(
-      <ImageBackground style={{flex: 1, backgroundColor: 'black', justifyContent: 'center', alignItems: 'center'}} source={require('../../assets/background.png')}>
-        <Text style={{color: 'white', fontFamily: 'PoppinsBold'}}>Like some movies to get some recommendations!</Text>
+  if (likedMoviesData && likedMoviesData.length === 0) {
+    return (
+      <ImageBackground style={{ flex: 1, backgroundColor: 'black', justifyContent: 'center', alignItems: 'center' }} source={require('../../assets/background.png')}>
+        <Text style={{ color: 'white', fontFamily: 'PoppinsBold' }}>Like some movies to get some recommendations!</Text>
       </ImageBackground>
     )
   } else if (listOfRecommendedMovies && listOfRecommendedMovies.length > 0) {
@@ -353,11 +360,11 @@ const MovieRecommendationScreen = (props) => {
                   </Animated.View>
                 </GestureDetector>
               ) : (
-                  <ActivityIndicator
-                    style={{flex: 1, backgroundColor: 'transparent'}}
-                    color={COLOURS.orange}
-                    size={'large'}
-                  />
+                <ActivityIndicator
+                  style={{ flex: 1, backgroundColor: 'transparent' }}
+                  color={COLOURS.orange}
+                  size={'large'}
+                />
               )
             }
 
@@ -365,6 +372,15 @@ const MovieRecommendationScreen = (props) => {
               <Fontisto name='like' size={40} color={COLOURS.green} />
             </Animated.View>
           </View>
+
+          <Snackbar
+            visible={snackBarVisible}
+            onDismiss={() => setSnackBarVisible(false)}
+            duration={2000}
+            style={{ backgroundColor: COLOURS.settingsBackgroud }}
+          >
+            <Text style={{ color: COLOURS.orange }}>{snackBarMessage}</Text>
+          </Snackbar>
         </ImageBackground>
       </SafeAreaView>
     )

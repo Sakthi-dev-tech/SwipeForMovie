@@ -15,10 +15,11 @@ import { FIRESTORE, STORAGE } from '../../../../firebase.config'
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { EmailAuthProvider, getAuth, reauthenticateWithCredential, updatePassword } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
+import { Snackbar } from 'react-native-paper'
 
 const EditProfileScreen = ({ navigation, route }) => {
 
-  const {profileImgURI} = route?.params
+  const { profileImgURI } = route?.params
 
   const [imageURI, setImageURI] = useState<string | undefined>(profileImgURI)
   const [username, setUsername] = useState<string>('')
@@ -27,10 +28,13 @@ const EditProfileScreen = ({ navigation, route }) => {
   const [currentPassword, setCurrentPassword] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [confirmPassword, setConfirmPassword] = useState<string>('')
-  const [profileImageChanged, setProfileImageChanged] = useState<boolean>(false)
+  const [profileImageChanged, setProfileImageChanged] = useState<boolean>(true)
 
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState<boolean>(false)
   const [showDeleteAccModal, setShowDeleteAccModal] = useState<boolean>(false)
+
+  const [snackBarMessage, setSnackBarMessage] = useState<string>('');
+  const [snackBarVisible, setSnackBarVisible] = useState<boolean>(false);
 
   const { user } = useContext(AuthContext)
 
@@ -79,7 +83,8 @@ const EditProfileScreen = ({ navigation, route }) => {
       await uploadBytes(reference, bytes).then(() => {
         setProfileImageChanged(true)
       }).catch((err) => {
-        Alert.alert("Error in uploading image", "There has been an error in uploading this image. Please do try again!")
+        setSnackBarMessage("There has been an error in uploading this image. Please do try again!")
+        setSnackBarVisible(true)
         console.error(err)
       }) //upload the bytes to firebase storage
     }
@@ -87,25 +92,28 @@ const EditProfileScreen = ({ navigation, route }) => {
 
   async function handleSubmitChangePW() {
     if (currentPassword.length === 0 || password.length === 0 || confirmPassword.length === 0) {
-      alert("Please ensure that you have all the fields filled up!")
-    } else if (password !== confirmPassword){
-      Alert.alert("Passwords do not match!", "Ensure your passwords match!")
+      setSnackBarMessage("Please ensure that you have all the fields filled up!")
+      setSnackBarVisible(true)
+    } else if (password !== confirmPassword) {
+      setSnackBarMessage("Passwords do not match! Ensure your passwords match!")
+      setSnackBarVisible(true)
     } else {
       try {
         // Re-authenticate the user with their current credentials
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
-    
+
         await reauthenticateWithCredential(user, credential);
         if (currentPassword === password) {
-          alert("Password already in use currently!")
+          setSnackBarMessage("Password already in use currently!")
+          setSnackBarVisible(true)
           return
         }
-    
+
         // Update the password after re-authentication
         await updatePassword(user, password)
 
-        alert("Password changed successfully!")
-
+        setSnackBarMessage("Password changed successfully!")
+        setSnackBarVisible(true)
         setCurrentPassword('')
         setPassword('')
         setConfirmPassword('')
@@ -113,16 +121,17 @@ const EditProfileScreen = ({ navigation, route }) => {
       } catch (error) {
         if (error instanceof FirebaseError) {
           if (error.code === 'auth/invalid-credential') {
-            alert("Your current password is invalid");
+            setSnackBarMessage("Your current password is invalid");
           } else if (error.code === 'auth/user-mismatch') {
-            alert("Provided credentials do not match any user!");
+            setSnackBarMessage("Provided credentials do not match any user!");
           } else if (error.code === 'auth/weak-password') {
-            alert("Passowrd is too weak! Choose a password that is at least 6 characters long!");
+            setSnackBarMessage("Passowrd is too weak! Choose a password that is at least 6 characters long!");
           } else if (error.code === 'auth/too-many-requests') {
-            alert("Too many requests! Try again later!");
+            setSnackBarMessage("Too many requests! Try again later!");
           } else {
-            console.error('Error re-authenticating or updating password: ', error);
+            console.error('Error in Sign In Screen: ', error);
           }
+          setSnackBarVisible(true)
         }
       }
     }
@@ -285,6 +294,15 @@ const EditProfileScreen = ({ navigation, route }) => {
               />
             </View>
           </View>
+
+          <Snackbar
+            visible={snackBarVisible}
+            onDismiss={() => setSnackBarVisible(false)}
+            duration={2000}
+            style={{ backgroundColor: COLOURS.settingsBackgroud }}
+          >
+            <Text style={{ color: COLOURS.orange }}>{snackBarMessage}</Text>
+          </Snackbar>
         </Modal>
 
         <Text

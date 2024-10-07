@@ -58,7 +58,6 @@ const SearchScreen = ({ navigation }) => {
                 duration: 500,
                 useNativeDriver: false
             }).start()
-
         }
 
         if (!isFocused) {
@@ -105,13 +104,12 @@ const SearchScreen = ({ navigation }) => {
         })
 
         // get the users to display also
-        if (searchQuery.length > 0) {
+        if (text.length > 0) {
             const q = query(collection(FIRESTORE, 'userInfo'),
                 orderBy('username'),
-                startAt(searchQuery),
-                endAt(searchQuery + '\uf8ff')
+                startAt(text),
+                endAt(text + '\uf8ff')
             )
-            setUsersListArray(null)
             const querySnapshot = await getDocs(q);
             const filteredDocuments = querySnapshot.docs.filter(doc => doc.id !== user?.uid);
             filteredDocuments.forEach((doc) => {
@@ -121,7 +119,6 @@ const SearchScreen = ({ navigation }) => {
         } else {
             setUsersListArray({})
         }
-
     }
 
     function handleUserPressed(item) {

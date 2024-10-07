@@ -9,6 +9,7 @@ import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebas
 import { AUTH } from '../../../firebase.config';
 import AuthContext from '../../contexts/AuthContext';
 import { FirebaseError } from 'firebase/app';
+import { Snackbar } from 'react-native-paper';
 
 export default function SignInScreen({ navigation, route }) {
 
@@ -21,6 +22,9 @@ export default function SignInScreen({ navigation, route }) {
     const [isReady, setIsReady] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+
+    const [snackBarMessage, setSnackBarMessage] = useState<string>('');
+    const [snackBarVisible, setSnackBarVisible] = useState<boolean>(false);
 
     useEffect(() => {
         // Subscribe to the user's authentication state
@@ -38,7 +42,7 @@ export default function SignInScreen({ navigation, route }) {
 
     useEffect(() => {
         Animated.timing(animatedHeight, {
-            toValue: screenDimensions.screenHeight * 0.40,
+            toValue: screenDimensions.screenHeight * 0.45,
             duration: 500,
             useNativeDriver: false
         }).start(() => {
@@ -64,16 +68,17 @@ export default function SignInScreen({ navigation, route }) {
         } catch (error) {
             if (error instanceof FirebaseError) {
                 if (error.code === 'auth/invalid-credential') {
-                    alert("Your current password is invalid");
+                    setSnackBarMessage("Your current password is invalid");
                 } else if (error.code === 'auth/user-mismatch') {
-                    alert("Provided credentials do not match any user!");
+                    setSnackBarMessage("Provided credentials do not match any user!");
                 } else if (error.code === 'auth/weak-password') {
-                    alert("Passowrd is too weak! Choose a password that is at least 6 characters long!");
+                    setSnackBarMessage("Passowrd is too weak! Choose a password that is at least 6 characters long!");
                 } else if (error.code === 'auth/too-many-requests') {
-                    alert("Too many requests! Try again later!");
+                    setSnackBarMessage("Too many requests! Try again later!");
                 } else {
                     console.error('Error in Sign In Screen: ', error);
                 }
+                setSnackBarVisible(true)
             }
         }
 
@@ -81,7 +86,7 @@ export default function SignInScreen({ navigation, route }) {
 
     function handleNavToSignUp() {
         navigation.replace('SignUpScreen', {
-            roundedContainerForStartingScreenHeightRatio: 0.40
+            roundedContainerForStartingScreenHeightRatio: 0.45
         })
     }
 
@@ -143,6 +148,14 @@ export default function SignInScreen({ navigation, route }) {
                     }
                 </Animated.View>
             </ImageBackground>
+            <Snackbar
+                visible={snackBarVisible}
+                onDismiss={() => setSnackBarVisible(false)}
+                duration={2000}
+                style={{backgroundColor: COLOURS.settingsBackgroud}}
+            >
+                <Text style={{color: COLOURS.orange}}>{snackBarMessage}</Text>
+            </Snackbar>
         </SafeAreaView>
     )
 }

@@ -84,12 +84,12 @@ const UserProfileModal = (props) => {
 
                         {
                             following ? (
-                                <TouchableOpacity onPress={() => setFollowing(!following)} style={[styles.button, { backgroundColor: 'black', width: 200 }]}>
+                                <TouchableOpacity onPress={() => setFollowing(!following)} style={[styles.button, { backgroundColor: 'black', width: '60%' }]}>
                                     <Image source={require('../../../assets/icons/person-tick.png')} style={{ aspectRatio: 1, width: 20, tintColor: 'white' }} />
                                     <Text style={styles.buttonText}>Following</Text>
                                 </TouchableOpacity>
                             ) : (
-                                <TouchableOpacity onPress={() => setFollowing(!following)} style={[styles.button, { backgroundColor: COLOURS.orange, width: 200 }]}>
+                                <TouchableOpacity onPress={() => setFollowing(!following)} style={[styles.button, { backgroundColor: COLOURS.orange, width: '60%' }]}>
                                     <Ionicons name='person-add' size={20} />
                                     <Text style={styles.buttonText}>Follow</Text>
                                 </TouchableOpacity>
@@ -125,11 +125,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         width: '100%',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-evenly',
     },
 
     button: {
-        width: 100,
+        width: '20%',
         height: 50,
         backgroundColor: COLOURS.red,
         borderRadius: 50,

@@ -12,6 +12,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { AUTH, FIRESTORE } from './firebase.config';
 import { AppState, AppStateStatus } from 'react-native';
+import { Provider as PaperProvider } from 'react-native-paper';
 
 const Stack = createStackNavigator();
 
@@ -54,9 +55,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user?.uid){
+    if (user?.uid) {
       const unsubscribe = onSnapshot(doc(FIRESTORE, 'userSettings', user.uid), (snapshot) => {
-        if (snapshot.exists()){
+        if (snapshot.exists()) {
           setShowAdultFilms(snapshot.data()['adult'])
           setTemperatureForMovieRecommendations(snapshot.data()['temperature'])
         }
@@ -82,16 +83,18 @@ export default function App() {
   if (fontLoaded) {
     return (
       <SafeAreaProvider>
-        <AuthContext.Provider value={{ user, setUser, appState, setAppState }}>
-          <SettingsContext.Provider value={{ showAdultFilms, setShowAdultFilms, temperatureForMovieRecommendation, setTemperatureForMovieRecommendations }}>
-            <StatusBar style='auto' networkActivityIndicatorVisible={false} />
-            <NavigationContainer>
-              <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>
-                <Stack.Screen name='AuthNavigator' component={AuthNavigator} />
-              </Stack.Navigator>
-            </NavigationContainer>
-          </SettingsContext.Provider>
-        </AuthContext.Provider>
+        <PaperProvider>
+          <AuthContext.Provider value={{ user, setUser, appState, setAppState }}>
+            <SettingsContext.Provider value={{ showAdultFilms, setShowAdultFilms, temperatureForMovieRecommendation, setTemperatureForMovieRecommendations }}>
+              <StatusBar networkActivityIndicatorVisible={false} />
+              <NavigationContainer>
+                <Stack.Navigator initialRouteName='AuthNavigator' screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name='AuthNavigator' component={AuthNavigator} />
+                </Stack.Navigator>
+              </NavigationContainer>
+            </SettingsContext.Provider>
+          </AuthContext.Provider>
+        </PaperProvider>
       </SafeAreaProvider>
     );
   }

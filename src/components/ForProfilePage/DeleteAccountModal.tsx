@@ -9,16 +9,20 @@ import { deleteDoc, doc } from 'firebase/firestore'
 import { FIRESTORE, STORAGE } from '../../../firebase.config'
 import { supabase } from '../../Embeddings/supabase'
 import { deleteObject, ref } from 'firebase/storage'
+import { Snackbar } from 'react-native-paper'
 
 const DeleteAccountModal = (props) => {
 
     const { user } = useContext(AuthContext)
     const [deletingAcc, setDeletingAcc] = useState<boolean>(false)
 
+    const [snackBarMessage, setSnackBarMessage] = useState<string>('');
+    const [snackBarVisible, setSnackBarVisible] = useState<boolean>(false);
+
     async function handleDeleteAccount() {
         try {
             setDeletingAcc(true)
-            
+
             // delete user information from firebase
             await deleteDoc(doc(FIRESTORE, 'userFollowing', user.uid))
             await deleteDoc(doc(FIRESTORE, 'userInfo', user.uid))
@@ -26,26 +30,29 @@ const DeleteAccountModal = (props) => {
 
             // delete user profile picture
             await deleteObject(ref(STORAGE, `gs://swipeformovie.appspot.com/profileImages/${user.uid}.jpg`))
-            
+
             // delete information from supabase
-            const {data, error} = await supabase
-            .from("UsersMovieData")
-            .delete()
-            .eq("userID", user.uid)
+            const { data, error } = await supabase
+                .from("UsersMovieData")
+                .delete()
+                .eq("userID", user.uid)
 
             if (error) {
                 console.error(error)
-                alert("Something went wrong while deleting your account!")
+                setSnackBarMessage("Something went wrong while deleting your account!")
+                setSnackBarVisible(true)
             }
 
             // delete account from firestore auth
             await deleteUser(user)
 
-            alert("Account deleted successfully!")
+            setSnackBarMessage("Account deleted successfully!")
+            setSnackBarVisible(true)
         } catch (err) {
             if (err) {
                 console.error(err)
-                alert("Something went wrong while deleting your account!")
+                setSnackBarMessage("Something went wrong while deleting your account!")
+                setSnackBarVisible(true)
             }
         } finally {
             setDeletingAcc(false)
@@ -58,20 +65,29 @@ const DeleteAccountModal = (props) => {
             <Modal
                 visible={deletingAcc}
             >
-            <ImageBackground source={require("../../assets/background.png")} style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-                <ActivityIndicator 
-                    style={{backgroundColor: 'transparent'}}
-                    color={COLOURS.orange}
-                    size={'large'}
-                />
+                <ImageBackground source={require("../../assets/background.png")} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <ActivityIndicator
+                        style={{ backgroundColor: 'transparent' }}
+                        color={COLOURS.orange}
+                        size={'large'}
+                    />
 
-                <Text style={{
-                    color: COLOURS.orange,
-                    marginTop: 20,
-                    fontSize: 15,
-                    fontFamily: "Lato"
-                }}>Account being deleted! Please wait!</Text>
-            </ImageBackground>
+                    <Text style={{
+                        color: COLOURS.orange,
+                        marginTop: 20,
+                        fontSize: 15,
+                        fontFamily: "Lato"
+                    }}>Account being deleted! Please wait!</Text>
+
+                    <Snackbar
+                        visible={snackBarVisible}
+                        onDismiss={() => setSnackBarVisible(false)}
+                        duration={2000}
+                        style={{ backgroundColor: COLOURS.settingsBackgroud }}
+                    >
+                        <Text style={{ color: COLOURS.orange }}>{snackBarMessage}</Text>
+                    </Snackbar>
+                </ImageBackground>
             </Modal>
         )
     }
@@ -94,9 +110,9 @@ const DeleteAccountModal = (props) => {
                     <Text style={styles.text}>Are you sure that you want to leave us?</Text>
 
                     <View style={styles.buttonContainer}>
-                        <TouchableOpacity 
-                        style={[styles.button, { backgroundColor: 'red' }]} 
-                        onPress={() => {props.setShowModal(false)}}>
+                        <TouchableOpacity
+                            style={[styles.button, { backgroundColor: 'red' }]}
+                            onPress={() => { props.setShowModal(false) }}>
                             <Text style={styles.buttonText}>Cancel</Text>
                         </TouchableOpacity>
 

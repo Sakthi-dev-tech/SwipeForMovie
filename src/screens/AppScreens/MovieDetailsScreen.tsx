@@ -1,17 +1,18 @@
-import { ActivityIndicator, Animated, FlatList, Image, ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import GoogleIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { LinearGradient } from 'expo-linear-gradient'
-import { baseImagePath, movieCastDetails, movieDetails, movieReviews } from '../../api/MovieAPICall'
+import { baseImagePath, movieCastDetails, movieDetails, movieReviews, movieVideo } from '../../api/MovieAPICall'
 import { COLOURS } from '../../theme/theme'
 import Entypo from 'react-native-vector-icons/Entypo'
 import Fontisto from 'react-native-vector-icons/Fontisto'
-import { useIsFocused, useNavigation } from '@react-navigation/native'
+import { useIsFocused } from '@react-navigation/native'
 import { screenDimensions } from '../../constants/screenDimensions'
 import CastRenderItem from '../../components/ForMovieDetailsScreen/CastRenderItem'
 import ReviewCard from '../../components/ForMovieDetailsScreen/ReviewCard'
 import { supabase } from '../../Embeddings/supabase'
 import AuthContext from '../../contexts/AuthContext'
+import YoutubeIframe from 'react-native-youtube-iframe'
 
 const StatusBarHeight = screenDimensions.StatusBarHeight || 0
 
@@ -20,13 +21,14 @@ const MovieDetailsScreen = ({ navigation, route }) => {
   const { user } = useContext(AuthContext)
 
   const { fromSearchScreen, movieID, backdropPath, posterPath, fromProfile } = route.params
-  
+
   const isFocused = useIsFocused()
-  
+
   const [movieDetailsData, setMovieDetailsData] = useState<any>(undefined)
   const [castDetailsData, setCastDetailsData] = useState<any>(undefined)
   const [reviewsData, setReviewsData] = useState<any>(undefined)
-  
+  const [videoID, setVideoID] = useState<string>("")
+
   const scrollViewRef = useRef<ScrollView>(null)
   const flatListRef = useRef<FlatList<any>>(null);
 
@@ -39,10 +41,11 @@ const MovieDetailsScreen = ({ navigation, route }) => {
 
   const [movieDeetsFetched, setMovieDeetsFetched] = useState<boolean>(false)
   const [fetchedLikedAndDislikedMovies, setFetchedLikedAndDislikedMovies] = useState<boolean>(false)
+  const [videoIDFetched, setVideoIDFetched] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
-    if (movieDeetsFetched && fetchedLikedAndDislikedMovies) {
+    if (movieDeetsFetched && fetchedLikedAndDislikedMovies && videoIDFetched) {
       setIsLoading(false)
     }
 
@@ -51,18 +54,19 @@ const MovieDetailsScreen = ({ navigation, route }) => {
       setIsLoading(true)
       setMovieDeetsFetched(false)
       setFetchedLikedAndDislikedMovies(false)
+      setVideoIDFetched(false)
     }
-  }, [isFocused, movieDeetsFetched, fetchedLikedAndDislikedMovies])
+  }, [isFocused, movieDeetsFetched, fetchedLikedAndDislikedMovies, videoIDFetched])
 
   // fetch liked and disliked movies
   useEffect(() => {
     const fetchLikedMoviesList = async () => {
       const { data: likedMoviesFromDB, error: likedMoviesFromDBError } = await supabase
-      .from("UsersMovieData")
-      .select("liked_movies")
-      .eq("userID", user.uid)
-      
-      if (likedMoviesFromDB){
+        .from("UsersMovieData")
+        .select("liked_movies")
+        .eq("userID", user.uid)
+
+      if (likedMoviesFromDB) {
         setListOfAllLikedMovies(likedMoviesFromDB[0].liked_movies)
         setIsMovieLiked(likedMoviesFromDB[0].liked_movies.some(item => item.id === movieID))
       }
@@ -71,16 +75,16 @@ const MovieDetailsScreen = ({ navigation, route }) => {
         console.error("Error while fetching liked movies: ", likedMoviesFromDBError)
       }
 
-      
+
     }
 
     const fetchDislikedMoviesList = async () => {
       const { data: dislikedMoviesFromDB, error: dislikedMoviesFromDBError } = await supabase
-      .from("UsersMovieData")
-      .select("disliked_movies")
-      .eq("userID", user.uid)
-      
-      if (dislikedMoviesFromDB){
+        .from("UsersMovieData")
+        .select("disliked_movies")
+        .eq("userID", user.uid)
+
+      if (dislikedMoviesFromDB) {
         setListOfAllDislikedMovies(dislikedMoviesFromDB[0].disliked_movies)
         setIsMovieDisliked(dislikedMoviesFromDB[0].disliked_movies.some(item => item.id === movieID))
       }
@@ -142,23 +146,42 @@ const MovieDetailsScreen = ({ navigation, route }) => {
       }
     }
 
-    fetchMovieDetails()
-    fetchMovieCastDetails()
-    fetchReviews()
+    const fetchMovieVideo = async () => {
+      try {
+        let response = await fetch(movieVideo(movieID))
+        let video = await response.json()
+        video.results.map((item, index) => {
+          if (item.site === "YouTube" && item.type === "Trailer" && item.official === true) {
+            setVideoID(item.key)
+          } else if (item.site === "YouTube" && item.type === "Teaser" && item.official === true) {
+            setVideoID(item.key)
+          }
+        })
+      } catch (err) {
+        console.error("Something went wrong while fetching the trailer video: ", err)
+      } finally {
+        setVideoIDFetched(true)
+      }
+    }
+
+    fetchMovieDetails();
+    fetchMovieCastDetails();
+    fetchReviews();
+    fetchMovieVideo();
   }, [isFocused])
 
   useEffect(() => {
     const updateTheLikedAndDislikedMoviesInDB = async () => {
       const { data, error } = await supabase
-      .from('UsersMovieData')
-      .update({
-        liked_movies: listOfAllLikedMovies,
-        disliked_movies: listOfAllDislikedMovies
-      })
-      .eq("userID", user.uid)
+        .from('UsersMovieData')
+        .update({
+          liked_movies: listOfAllLikedMovies,
+          disliked_movies: listOfAllDislikedMovies
+        })
+        .eq("userID", user.uid)
     }
 
-    if (!isFocused){      
+    if (!isFocused) {
       updateTheLikedAndDislikedMoviesInDB();
     }
 
@@ -172,12 +195,12 @@ const MovieDetailsScreen = ({ navigation, route }) => {
     } else {
       navigation.navigate("Home")
     }
-    scrollViewRef?.current?.scrollTo({y: 0, animated: false})
+    scrollViewRef?.current?.scrollTo({ y: 0, animated: false })
   }
 
   function handlePressDislike() {
 
-    if (isMovieDisliked){
+    if (isMovieDisliked) {
       // if already disliked, just undislike it
       setListOfAllDislikedMovies(list => list.filter(item => item.id !== movieID))
       setIsMovieDisliked(false)
@@ -185,13 +208,13 @@ const MovieDetailsScreen = ({ navigation, route }) => {
       setListOfAllDislikedMovies(prevMovies => [...prevMovies, currentMovieForDB])
       setIsMovieDisliked(true)
     }
-    if (isMovieLiked){
+    if (isMovieLiked) {
       // if movie was liked before
       setListOfAllLikedMovies(list => list.filter(item => item.id !== movieID))
       setIsMovieLiked(false)
     }
   }
-  
+
   function handlePressLike() {
 
     if (isMovieLiked) {
@@ -292,44 +315,66 @@ const MovieDetailsScreen = ({ navigation, route }) => {
             />
           </View>
 
+          {
+            videoID ? (
+              <View style={styles.trailerContainer}>
+                <Text style={styles.header}>Movie Trailer</Text>
+                <YoutubeIframe
+                  height={200}
+                  videoId={videoID}
+                  width={screenDimensions.screenWidth * 0.9}
+                />
+              </View>
+
+            ) : (
+              <View/>
+            )
+          }
+
           <View style={styles.reviewsContainer}>
             <Text style={styles.header}>Reviews</Text>
-            <FlatList
-              snapToInterval={screenDimensions.screenWidth * 0.9 + 10}
-              showsHorizontalScrollIndicator={false}
-              horizontal
-              bounces
-              data={reviewsData}
-              style={{
-                height: 150
-              }}
-              contentContainerStyle={{
-                gap: 10,
-              }}
-              decelerationRate={'fast'}
-              ref={flatListRef}
-              renderItem={({item}) => {
-                return(
-                  <ReviewCard
-                    authorUsername={item.author_details.username}
-                    authorAvatar={item.author_details.avatar_path}
-                    userRating={item.author_details.rating}
-                    review={item.content}
-                  />
-                )
-              }}
-            />
+            {
+              reviewsData && reviewsData.length > 0 ? (
+                <FlatList
+                  snapToInterval={screenDimensions.screenWidth * 0.9 + 10}
+                  showsHorizontalScrollIndicator={false}
+                  horizontal
+                  bounces
+                  data={reviewsData}
+                  style={{
+                    height: 150
+                  }}
+                  contentContainerStyle={{
+                    gap: 10,
+                  }}
+                  decelerationRate={'fast'}
+                  ref={flatListRef}
+                  renderItem={({ item }) => {
+                    return (
+                      <ReviewCard
+                        authorUsername={item.author_details.username}
+                        authorAvatar={item.author_details.avatar_path}
+                        userRating={item.author_details.rating}
+                        review={item.content}
+                      />
+                    )
+                  }}
+                />
+              ) : (
+                <Text style={{ color: 'white', fontSize: 20, alignSelf: 'center', fontFamily: 'Lato', marginTop: 20 }}>Oops! No Reviews Yet!</Text>
+              )
+            }
           </View>
 
           <View style={{ height: 125 }} />
         </ScrollView>
         <View style={styles.likeAndDislikeButtonsContainer}>
-          <TouchableOpacity onPress={() => handlePressDislike()} style={isMovieDisliked ? [styles.movieIsLikedOrDislikedButton, {backgroundColor: COLOURS.red}] : [styles.likeOrDislikeButton, { borderColor: COLOURS.red }]}>
-            <Fontisto name='dislike' size={40} color={isMovieDisliked ? 'black': COLOURS.red} />
+          <TouchableOpacity onPress={() => handlePressDislike()} style={isMovieDisliked ? [styles.movieIsLikedOrDislikedButton, { backgroundColor: COLOURS.red }] : [styles.likeOrDislikeButton, { borderColor: COLOURS.red }]}>
+            <Fontisto name='dislike' size={40} color={isMovieDisliked ? 'black' : COLOURS.red} />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => handlePressLike()} style={isMovieLiked ? styles.movieIsLikedOrDislikedButton : [styles.likeOrDislikeButton, { borderColor: COLOURS.green }]}>
-            <Fontisto name='like' size={40} color={isMovieLiked ? 'black': COLOURS.green} />
+            <Fontisto name='like' size={40} color={isMovieLiked ? 'black' : COLOURS.green} />
           </TouchableOpacity>
         </View>
       </ImageBackground>
@@ -429,10 +474,10 @@ const styles = StyleSheet.create({
     height: 195
   },
 
-  reviewsContainer:{
+  reviewsContainer: {
     alignSelf: 'center',
     width: '90%',
-    marginTop: 10,
+    marginTop: 30,
   },
 
   likeAndDislikeButtonsContainer: {
@@ -462,5 +507,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLOURS.green
+  },
+
+  trailerContainer: {
+    width: '90%',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: 10
   }
 })

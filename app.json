@@ -1,31 +1,42 @@
 {
   "expo": {
-    "name": "MovieRecommend",
+    "name": "SwipeForMovie",
     "slug": "MovieRecommend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/appIcon.png",
+    "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/appSplash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#24221f"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/appIcon.png",
+        "backgroundColor": "#24221f"
       },
-      "package": "com.adormantsakthi.swipeformovie"
+      "package": "com.adormantsakthi.swipeformovie",
+      "keystore": {
+        "keystorePath": "./android/your-release-key.keystore",
+        "alias": "your-key-alias",
+        "keystorePassword": "sakthi2004",
+        "keyPassword": "sakthi2004"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "14307ed5-00f9-4dca-a0bd-51f5dc7ec98b"
+      }
+    }
   }
 }

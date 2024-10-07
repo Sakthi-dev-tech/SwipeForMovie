@@ -10,6 +10,7 @@ import { AUTH, FIRESTORE } from '../../../firebase.config'
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { supabase } from '../../Embeddings/supabase';
 import { FirebaseError } from 'firebase/app';
+import { Snackbar } from 'react-native-paper';
 
 export default function SignUpScreen({ navigation, route }) {
 
@@ -28,9 +29,13 @@ export default function SignUpScreen({ navigation, route }) {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
 
+    const [snackBarMessage, setSnackBarMessage] = useState<string>('');
+    const [snackBarVisible, setSnackBarVisible] = useState<boolean>(false);
+
     async function handleSignUp() {
         if (username === '' || email === '' || password === '' || confirmPassword === '') {
-            alert("Please ensure all fields are filled up!")
+            setSnackBarMessage("Please ensure all fields are filled up!")
+            setSnackBarVisible(true)
         } else {
             try {
                 await createUserWithEmailAndPassword(AUTH, email, password).then(async (userCredentials) => {
@@ -72,27 +77,22 @@ export default function SignUpScreen({ navigation, route }) {
                 })
             } catch (err) {
                 if (err instanceof FirebaseError) {
-                    if (err.code === 'auth/email-already-in-use'){
-                        alert('Email already in use. Please use a different email.');
+                    if (err.code === 'auth/invalid-credential') {
+                        setSnackBarMessage("Your current password is invalid");
+                    } else if (err.code === 'auth/user-mismatch') {
+                        setSnackBarMessage("Provided credentials do not match any user!");
+                    } else if (err.code === 'auth/weak-password') {
+                        setSnackBarMessage("Passowrd is too weak! Choose a password that is at least 6 characters long!");
+                    } else if (err.code === 'auth/too-many-requests') {
+                        setSnackBarMessage("Too many requests! Try again later!");
+                    } else {
+                        console.error('Error in Sign In Screen: ', err);
                     }
-                    if (err.code === 'auth/invalid-email'){
-                        alert('Invalid email format. Please provide a valid email address.');
-                    }
-                    if (err.code === 'auth/weak-password'){
-                        alert('Weak password. Please provide a stronger password.');
-                    }
-                    if (err.code === 'auth/operation-not-allowed'){
-                        alert('This sign-up method is not enabled. Please contact support.');
-                    }
-                    if (err.code === 'auth/too-many-requests'){
-                        alert('Too many requests. Please try again later.');
-                    }
-                    console.error("Error while signing up by email: ", err)
-    
+                    setSnackBarVisible(true)
                 }
             } finally {
                 navigation.replace("SignInScreen", {
-                    roundedContainerForStartingScreenHeightRatio: 0.60
+                    roundedContainerForStartingScreenHeightRatio: 0.65
                 })
             }
         }
@@ -100,13 +100,13 @@ export default function SignUpScreen({ navigation, route }) {
 
     function handleNavToSignInPage() {
         navigation.replace("SignInScreen", {
-            roundedContainerForStartingScreenHeightRatio: 0.60
+            roundedContainerForStartingScreenHeightRatio: 0.65
         })
     }
 
     useEffect(() => {
         Animated.timing(animatedHeight, {
-            toValue: screenDimensions.screenHeight * 0.60,
+            toValue: screenDimensions.screenHeight * 0.65,
             duration: 500,
             useNativeDriver: false
         }).start(() => {
@@ -204,6 +204,14 @@ export default function SignUpScreen({ navigation, route }) {
 
                     }
                 </Animated.View>
+                <Snackbar
+                visible={snackBarVisible}
+                onDismiss={() => setSnackBarVisible(false)}
+                duration={2000}
+                style={{backgroundColor: COLOURS.settingsBackgroud}}
+            >
+                <Text style={{color: COLOURS.orange}}>{snackBarMessage}</Text>
+            </Snackbar>
             </ImageBackground>
         </SafeAreaView>
     )
