@@ -31,6 +31,7 @@ const MovieDetailsScreen = ({ navigation, route }) => {
 
   const scrollViewRef = useRef<ScrollView>(null)
   const flatListRef = useRef<FlatList<any>>(null);
+  const [itemHeights, setItemHeights] = useState({});
 
   const [isMovieLiked, setIsMovieLiked] = useState<boolean>(false)
   const [isMovieDisliked, setIsMovieDisliked] = useState<boolean>(false)
@@ -327,7 +328,7 @@ const MovieDetailsScreen = ({ navigation, route }) => {
               </View>
 
             ) : (
-              <View/>
+              <View />
             )
           }
 
@@ -339,24 +340,30 @@ const MovieDetailsScreen = ({ navigation, route }) => {
                   snapToInterval={screenDimensions.screenWidth * 0.9 + 10}
                   showsHorizontalScrollIndicator={false}
                   horizontal
-                  bounces
                   data={reviewsData}
                   style={{
-                    height: 150
+                    height: 'auto'
                   }}
                   contentContainerStyle={{
                     gap: 10,
+                    height: 'auto'
                   }}
                   decelerationRate={'fast'}
                   ref={flatListRef}
-                  renderItem={({ item }) => {
+                  extraData={itemHeights}
+                  renderItem={({ item, index }) => {
                     return (
-                      <ReviewCard
-                        authorUsername={item.author_details.username}
-                        authorAvatar={item.author_details.avatar_path}
-                        userRating={item.author_details.rating}
-                        review={item.content}
-                      />
+                      <View onLayout={(event) => {
+                        const { height } = event.nativeEvent.layout;
+                        setItemHeights(prevHeights => ({ ...prevHeights, [index]: height }));
+                      }}>
+                        <ReviewCard
+                          authorUsername={item.author_details.username}
+                          authorAvatar={item.author_details.avatar_path}
+                          userRating={item.author_details.rating}
+                          review={item.content}
+                        />
+                      </View>
                     )
                   }}
                 />

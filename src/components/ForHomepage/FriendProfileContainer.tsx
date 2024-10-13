@@ -4,6 +4,7 @@ import { arrayRemove, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { FIRESTORE, STORAGE } from '../../../firebase.config'
 import { getDownloadURL, ref } from 'firebase/storage'
 import AuthContext from '../../contexts/AuthContext'
+import { FirebaseError } from 'firebase/app'
 
 const FriendProfileContainer = (props) => {
 
@@ -47,7 +48,13 @@ const FriendProfileContainer = (props) => {
                 setImage(uri)
             }).catch((err) => {
                 setImage('')
-                console.error("Error while fetching picture in FriendProfileContainer: ", err)
+                if (err instanceof FirebaseError){
+                    if (err.code === 'storage/object-not-found') {
+                        return
+                    }
+                } else {
+                    console.error("Error while fetching picture in FriendProfileContainer: ", err)
+                }
             })
         }
 

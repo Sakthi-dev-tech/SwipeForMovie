@@ -5,7 +5,7 @@ import { COLOURS } from '../../theme/theme';
 import { screenDimensions } from '../../constants/screenDimensions';
 import Entypo from 'react-native-vector-icons/Entypo'
 import AntDesign from 'react-native-vector-icons/AntDesign'
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, sendEmailVerification, signInWithPopup } from 'firebase/auth';
 import { AUTH, FIRESTORE } from '../../../firebase.config'
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { supabase } from '../../Embeddings/supabase';
@@ -36,10 +36,18 @@ export default function SignUpScreen({ navigation, route }) {
         if (username === '' || email === '' || password === '' || confirmPassword === '') {
             setSnackBarMessage("Please ensure all fields are filled up!")
             setSnackBarVisible(true)
+        } else if (password !== confirmPassword) {
+            setSnackBarMessage("Passwords do not match!")
+            setSnackBarVisible(true)
         } else {
             try {
                 await createUserWithEmailAndPassword(AUTH, email, password).then(async (userCredentials) => {
                     const user = userCredentials.user
+
+                    await sendEmailVerification(user).then(() => {
+                        setSnackBarMessage("Verification Email Sent! Please verify your account!")
+                        setSnackBarVisible(true)
+                    })
     
                     await setDoc(
                         doc(collection(FIRESTORE, "userSettings"), user.uid),
@@ -85,10 +93,14 @@ export default function SignUpScreen({ navigation, route }) {
                         setSnackBarMessage("Passowrd is too weak! Choose a password that is at least 6 characters long!");
                     } else if (err.code === 'auth/too-many-requests') {
                         setSnackBarMessage("Too many requests! Try again later!");
+                    } else if (err.code === 'auth/missing-password') {
+                        setSnackBarMessage("Enter your password!")
+                    } else if (err.code === 'auth/user-disabled') {
+                        setSnackBarMessage("This user has been disabled! Contact the admin!")
                     } else {
+                        setSnackBarMessage("Something went wrong!")
                         console.error('Error in Sign In Screen: ', err);
                     }
-                    setSnackBarVisible(true)
                 }
             } finally {
                 navigation.replace("SignInScreen", {

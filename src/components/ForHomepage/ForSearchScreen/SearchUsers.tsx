@@ -2,6 +2,7 @@ import { Image, StyleSheet, Text, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { STORAGE } from '../../../../firebase.config';
 import { getDownloadURL, ref } from 'firebase/storage';
+import { FirebaseError } from 'firebase/app';
 
 const SearchUsers = (props) => {
     const [profileURI, setProfileURI] = useState<string>('');
@@ -13,14 +14,20 @@ const SearchUsers = (props) => {
                 setProfileURI(uri)
             }).catch((err) => {
                 setProfileURI('')
-                console.error("Error while fetching picture in search screen: ", err)
+                if (err instanceof FirebaseError) {
+                    if (err.code === 'storage/object-not-found') {
+                        return
+                    }
+                } else {
+                    console.error("Error while fetching picture in search screen: ", err)
+                }
             })
         }
         getUserImage();
     }, [])
 
     return (
-        <View style={{alignItems: 'center'}}>
+        <View style={{ alignItems: 'center' }}>
             <Image style={styles.container} source={profileURI ? { uri: profileURI } : require('../../../assets/default.png')} />
             <Text style={styles.username}>{props.username}</Text>
         </View>

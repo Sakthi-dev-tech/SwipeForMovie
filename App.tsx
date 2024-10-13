@@ -36,9 +36,14 @@ export default function App() {
 
   const [user, setUser] = useState<any>(getAuth().currentUser)
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState)
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(AUTH, (user) => {
-      setUser(user)
+      if (user?.emailVerified) {
+        setUser(user)
+      } else {
+        setUser(null)
+      }
     })
 
     return () => unsubscribe()

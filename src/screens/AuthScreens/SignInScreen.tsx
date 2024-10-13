@@ -5,7 +5,7 @@ import { COLOURS } from '../../theme/theme';
 import { screenDimensions } from '../../constants/screenDimensions';
 import Entypo from 'react-native-vector-icons/Entypo'
 import AntDesign from 'react-native-vector-icons/AntDesign'
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { AUTH } from '../../../firebase.config';
 import AuthContext from '../../contexts/AuthContext';
 import { FirebaseError } from 'firebase/app';
@@ -26,19 +26,21 @@ export default function SignInScreen({ navigation, route }) {
     const [snackBarMessage, setSnackBarMessage] = useState<string>('');
     const [snackBarVisible, setSnackBarVisible] = useState<boolean>(false);
 
+    const [emailNotVerifiedSnackbarVisible, setEmailNoteVerifiedSnackbarVisible] = useState<boolean>(false)
+
     useEffect(() => {
         // Subscribe to the user's authentication state
         const unsubscribe = onAuthStateChanged(AUTH, (currentUser) => {
-          if (currentUser) {
-            setUser(currentUser);
-          } else {
-            setUser(null); // User is signed out
-          }
+            if (currentUser && currentUser?.emailVerified) {
+                setUser(currentUser);
+            } else {
+                setUser(null); // User is signed out or still not verified
+            }
         });
-    
+
         // Cleanup subscription on unmount
         return () => unsubscribe();
-      }, [AUTH]);
+    }, [AUTH]);
 
     useEffect(() => {
         Animated.timing(animatedHeight, {
@@ -60,10 +62,48 @@ export default function SignInScreen({ navigation, route }) {
         }
     }, [isReady])
 
+    async function handleResetPassword() {
+        try {
+            await sendPasswordResetEmail(AUTH, email).then(() => {
+                setSnackBarMessage("Password Reset Email Sent!")
+                setSnackBarVisible(true)
+            })
+        } catch (error) {
+            if (error instanceof FirebaseError) {
+                if (error.code === 'auth/invalid-credential') {
+                    setSnackBarMessage("Your current password is invalid");
+                } else if (error.code === 'auth/user-mismatch') {
+                    setSnackBarMessage("Provided credentials do not match any user!");
+                } else if (error.code === 'auth/weak-password') {
+                    setSnackBarMessage("Inavlid Password");
+                } else if (error.code === 'auth/too-many-requests') {
+                    setSnackBarMessage("Too many requests! Try again later!");
+                } else if (error.code === 'auth/missing-password') {
+                    setSnackBarMessage("Enter your password!")
+                } else if (error.code === 'auth/user-disabled') {
+                    setSnackBarMessage("This user has been disabled! Contact the admin!")
+                } else if (error.code === 'auth/invalid-email') {
+                    setSnackBarMessage("Invalid Email Provided!")
+                } else {
+                    setSnackBarMessage("Something went wrong!")
+                    console.error('Error in Sign In Screen: ', error);
+                }
+                setSnackBarVisible(true)
+            }
+        }
+
+    }
+
     async function handleSignIn() {
         try {
             await signInWithEmailAndPassword(AUTH, email, password).then(async (userCreds) => {
-                setUser(getAuth().currentUser)
+                // if user is already verified
+                if (userCreds.user.emailVerified) {
+                    setUser(userCreds.user)
+                } else {
+                    setEmailNoteVerifiedSnackbarVisible(true)
+                    setUser(null)
+                }
             });
         } catch (error) {
             if (error instanceof FirebaseError) {
@@ -72,10 +112,17 @@ export default function SignInScreen({ navigation, route }) {
                 } else if (error.code === 'auth/user-mismatch') {
                     setSnackBarMessage("Provided credentials do not match any user!");
                 } else if (error.code === 'auth/weak-password') {
-                    setSnackBarMessage("Passowrd is too weak! Choose a password that is at least 6 characters long!");
+                    setSnackBarMessage("Inavlid Password");
                 } else if (error.code === 'auth/too-many-requests') {
                     setSnackBarMessage("Too many requests! Try again later!");
+                } else if (error.code === 'auth/missing-password') {
+                    setSnackBarMessage("Enter your password!")
+                } else if (error.code === 'auth/user-disabled') {
+                    setSnackBarMessage("This user has been disabled! Contact the admin!")
+                } else if (error.code === 'auth/invalid-email') {
+                    setSnackBarMessage("Invalid Email Provided!")
                 } else {
+                    setSnackBarMessage("Something went wrong!")
                     console.error('Error in Sign In Screen: ', error);
                 }
                 setSnackBarVisible(true)
@@ -135,13 +182,25 @@ export default function SignInScreen({ navigation, route }) {
                                     </TouchableOpacity>
 
                                     <View style={{
-                                        flexDirection: 'row'
+                                        flexDirection: 'row',
+                                        marginTop: 10
+                                    }}>
+                                        <Text style={styles.signUpPageNavText}>Forgot Password? </Text>
+                                        <TouchableOpacity onPress={() => { handleResetPassword() }}>
+                                            <Text style={[styles.signUpPageNavText, { color: 'blue' }]}>Reset Password</Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    <View style={{
+                                        flexDirection: 'row',
+                                        marginTop: 10
                                     }}>
                                         <Text style={styles.signUpPageNavText}>Don't have an account? </Text>
                                         <TouchableOpacity onPress={() => { handleNavToSignUp() }}>
                                             <Text style={[styles.signUpPageNavText, { color: 'blue' }]}>Sign Up</Text>
                                         </TouchableOpacity>
                                     </View>
+
                                 </View>
                             </ScrollView>
                         </Animated.View>
@@ -152,9 +211,30 @@ export default function SignInScreen({ navigation, route }) {
                 visible={snackBarVisible}
                 onDismiss={() => setSnackBarVisible(false)}
                 duration={2000}
-                style={{backgroundColor: COLOURS.settingsBackgroud}}
+                style={{ backgroundColor: COLOURS.settingsBackgroud }}
             >
-                <Text style={{color: COLOURS.orange}}>{snackBarMessage}</Text>
+                <Text style={{ color: COLOURS.orange }}>{snackBarMessage}</Text>
+            </Snackbar>
+
+            <Snackbar
+                visible={emailNotVerifiedSnackbarVisible}
+                onDismiss={() => setEmailNoteVerifiedSnackbarVisible(false)}
+                duration={5000}
+                style={{ backgroundColor: COLOURS.settingsBackgroud }}
+
+                action={{
+                    label: "Send Verification",
+                    labelStyle: { color: 'lightgray' },
+                    onPress: async () => {
+                        // this is just to get the user because we set user to null before
+                        await signInWithEmailAndPassword(AUTH, email, password).then(async (userCreds) => {
+                            setUser(null)
+                            await sendEmailVerification(userCreds.user)
+                        });
+                    }
+                }}
+            >
+                <Text style={{ color: COLOURS.orange }}>Email not verified! Please verify your account first!</Text>
             </Snackbar>
         </SafeAreaView>
     )
