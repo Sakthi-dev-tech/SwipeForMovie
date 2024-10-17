@@ -8,7 +8,6 @@
 - [Features](#features)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
-- [License](#license)
 - [Contact](#contact)
 
 ## About the Project
