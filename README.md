@@ -26,11 +26,26 @@
 - Feature 4: Able to see the liked movies of users that you search up and follow on the app
 
 ## Screenshots
-![Screenshot](url_to_image)
+<table>
+  <tr>
+    <td><img src="assets/AppScreenshot1.jpg" alt="MainScreen" width="300"/></td>
+    <td><img src="assets/AppScreenshot2.jpg" alt="UpcomingAndPopular" width="300"/></td>
+  </tr>
+  <tr>
+    <td><img src="assets/AppScreenshot3.jpg" alt="MovieOverview" width="300"/></td>
+    <td><img src="assets/AppScreenshot4.jpg" alt="MovieDetails" width="300"/></td>
+  </tr>
+  <tr>
+    <td><img src="assets/AppScreenshot5.jpg" alt="MovieTrailerAndReviews" width="300"/></td>
+    <td><img src="assets/AppScreenshot6.jpg" alt="SearchScreen" width="300"/></td>
+  </tr>
+  <tr>
+    <td><img src="assets/AppScreenshot7.jpg" alt="UserFollowPopup" width="300"/></td>
+  </tr>
+</table>
 
 ## Installation
-
-## License
+[Download APK from Google Drive](https://drive.google.com/file/d/1JPYMHgvkblgLkPW5qetl5eRpsTwnSObf/view?usp=drive_link)
 
 ## Contact
 *Email:* adormantsakthi@gmail.com
