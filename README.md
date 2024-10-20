@@ -40,6 +40,11 @@
   </tr>
   <tr>
     <td><img src="assets/AppScreenshot7.jpg" alt="UserFollowPopup" width="300"/></td>
+    <td><img src="assets/AppScreenshot10.jpg" alt="SuggestMeScreen" width="300"/></td>
+  </tr>
+  <tr>
+     <td><img src="assets/AppScreenshot8.jpg" alt="LikeAMovieInSuggestMeScreen" width="300"/></td>
+     <td><img src="assets/AppScreenshot9.jpg" alt="DislikeAMovieInSuggestMeScreen" width="300"/></td>
   </tr>
 </table>
 
