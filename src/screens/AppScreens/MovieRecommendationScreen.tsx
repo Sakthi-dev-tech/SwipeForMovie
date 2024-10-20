@@ -99,13 +99,13 @@ const MovieRecommendationScreen = (props) => {
       console.error(error)
       setSnackBarMessage("Oh no! Something went wrong! Try again!")
       setSnackBarVisible(true)
-    }
-
-    if (data.length === 0) {
+    } else if (data.length === 0) {
       setSnackBarMessage("No movies found! Try reducing the similarity value for movies to be recommended!")
       setSnackBarVisible(true)
+    } else {
+      console.log(data)
+      setListOfRecommendedMovies(data)
     }
-    setListOfRecommendedMovies(data)
   }
 
   // this function calculates the average embedding for the user
@@ -188,10 +188,11 @@ const MovieRecommendationScreen = (props) => {
   }
 
   useEffect(() => {
-    if (currCardindex === Infinity) {
+    // update the recommended movies when there is only 1 movie left in recommendation
+    if (listOfRecommendedMovies && listOfRecommendedMovies.length == 0) {
       setUpdateRecommendedMovies(true)
     }
-  }, [currCardindex])
+  }, [listOfRecommendedMovies])
 
   const pan = Gesture.Pan()
     .onChange((event) => {
@@ -326,7 +327,7 @@ const MovieRecommendationScreen = (props) => {
         <Text style={{ color: 'white', fontFamily: 'PoppinsBold' }}>Like some movies to get some recommendations!</Text>
       </ImageBackground>
     )
-  } else if (listOfRecommendedMovies && listOfRecommendedMovies.length > 0) {
+  } else if (listOfRecommendedMovies && listOfRecommendedMovies.length > 0 && listOfRecommendedMovies[currCardindex].poster_path) {
     return (
       <SafeAreaView style={{ flex: 1 }}>
         <ImageBackground style={{ flex: 1, alignItems: 'center' }} source={require('../../assets/background.png')}>

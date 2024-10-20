@@ -205,6 +205,7 @@ export default function SignInScreen({ navigation, route }) {
                             </ScrollView>
                         </Animated.View>
                     }
+                    <View style={{height: 10}}/>
                 </Animated.View>
             </ImageBackground>
             <Snackbar
