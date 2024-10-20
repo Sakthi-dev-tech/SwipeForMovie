@@ -103,7 +103,6 @@ const MovieRecommendationScreen = (props) => {
       setSnackBarMessage("No movies found! Try reducing the similarity value for movies to be recommended!")
       setSnackBarVisible(true)
     } else {
-      console.log(data)
       setListOfRecommendedMovies(data)
     }
   }
@@ -189,7 +188,7 @@ const MovieRecommendationScreen = (props) => {
 
   useEffect(() => {
     // update the recommended movies when there is only 1 movie left in recommendation
-    if (listOfRecommendedMovies && listOfRecommendedMovies.length == 0) {
+    if (listOfRecommendedMovies && listOfRecommendedMovies.length === 0) {
       setUpdateRecommendedMovies(true)
     }
   }, [listOfRecommendedMovies])

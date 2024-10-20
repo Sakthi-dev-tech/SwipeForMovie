@@ -13,6 +13,7 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { AUTH, FIRESTORE } from './firebase.config';
 import { AppState, AppStateStatus } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Stack = createStackNavigator();
 
@@ -38,15 +39,17 @@ export default function App() {
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState)
   
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(AUTH, (user) => {
-      if (user?.emailVerified) {
-        setUser(user)
-      } else {
-        setUser(null)
-      }
-    })
+    const getUser = async () => {
+      await AsyncStorage.getItem("User").then((val) => {
+        if (val !== null){
+          setUser(JSON.parse(val))
+        } else {
+          setUser(null)
+        }
+      })
+    }
 
-    return () => unsubscribe()
+    getUser();
   }, [])
 
   useEffect(() => {

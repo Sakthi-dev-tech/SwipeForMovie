@@ -9,6 +9,7 @@ import { signOut } from 'firebase/auth'
 import { AUTH, STORAGE } from '../../../../firebase.config'
 import { getDownloadURL, ref } from 'firebase/storage'
 import { useIsFocused } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const ProfileAndSettingsScreen = ({ navigation }) => {
 
@@ -20,6 +21,7 @@ const ProfileAndSettingsScreen = ({ navigation }) => {
     async function handleSignOut() {
         await signOut(AUTH).then(() => {
             setUser(null)
+            AsyncStorage.removeItem("User")
         })
     }
 

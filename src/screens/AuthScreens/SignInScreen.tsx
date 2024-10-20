@@ -10,6 +10,7 @@ import { AUTH } from '../../../firebase.config';
 import AuthContext from '../../contexts/AuthContext';
 import { FirebaseError } from 'firebase/app';
 import { Snackbar } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SignInScreen({ navigation, route }) {
 
@@ -33,6 +34,7 @@ export default function SignInScreen({ navigation, route }) {
         const unsubscribe = onAuthStateChanged(AUTH, (currentUser) => {
             if (currentUser && currentUser?.emailVerified) {
                 setUser(currentUser);
+                AsyncStorage.setItem("User", JSON.stringify(currentUser))
             } else {
                 setUser(null); // User is signed out or still not verified
             }

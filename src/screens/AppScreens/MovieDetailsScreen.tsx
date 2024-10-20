@@ -13,6 +13,7 @@ import ReviewCard from '../../components/ForMovieDetailsScreen/ReviewCard'
 import { supabase } from '../../Embeddings/supabase'
 import AuthContext from '../../contexts/AuthContext'
 import YoutubeIframe from 'react-native-youtube-iframe'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 
 const StatusBarHeight = screenDimensions.StatusBarHeight || 0
 
@@ -27,6 +28,9 @@ const MovieDetailsScreen = ({ navigation, route }) => {
   const [movieDetailsData, setMovieDetailsData] = useState<any>(undefined)
   const [castDetailsData, setCastDetailsData] = useState<any>(undefined)
   const [reviewsData, setReviewsData] = useState<any>(undefined)
+  const [reviewPageNum, setReviewPageNum] = useState<number>(1)
+  const [totalNumberOfReviewPages, setTotalNumberOfReviewPages] = useState<number>(0)
+  const [fetchAnotherPageOfReview, setFetchAnotherPageOfReview] = useState<boolean>(true)
   const [videoID, setVideoID] = useState<string>("")
 
   const scrollViewRef = useRef<ScrollView>(null)
@@ -56,6 +60,7 @@ const MovieDetailsScreen = ({ navigation, route }) => {
       setMovieDeetsFetched(false)
       setFetchedLikedAndDislikedMovies(false)
       setVideoIDFetched(false)
+      setReviewPageNum(1)
     }
   }, [isFocused, movieDeetsFetched, fetchedLikedAndDislikedMovies, videoIDFetched])
 
@@ -139,11 +144,14 @@ const MovieDetailsScreen = ({ navigation, route }) => {
 
     const fetchReviews = async () => {
       try {
-        let response = await fetch(movieReviews(movieID))
+        let response = await fetch(movieReviews(movieID, reviewPageNum))
         let reviewDeets = await response.json()
         setReviewsData(reviewDeets.results)
+        setTotalNumberOfReviewPages(reviewDeets.total_pages)
       } catch (err) {
         console.error("Something went wrong while fetching the review details: ", err)
+      } finally {
+        setFetchAnotherPageOfReview(false)
       }
     }
 
@@ -165,11 +173,33 @@ const MovieDetailsScreen = ({ navigation, route }) => {
       }
     }
 
-    fetchMovieDetails();
-    fetchMovieCastDetails();
-    fetchReviews();
-    fetchMovieVideo();
+    if (isFocused){
+      fetchMovieDetails();
+      fetchMovieCastDetails();
+      fetchReviews();
+      fetchMovieVideo();
+    }
   }, [isFocused])
+
+  // fetch new page of reviews when requested
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        let response = await fetch(movieReviews(movieID, reviewPageNum))
+        let reviewDeets = await response.json()
+        setReviewsData(reviewDeets.results)
+        setTotalNumberOfReviewPages(reviewDeets.total_pages)
+      } catch (err) {
+        console.error("Something went wrong while fetching the review details: ", err)
+      } finally {
+        setFetchAnotherPageOfReview(false)
+      }
+    }
+
+    if (fetchAnotherPageOfReview) {
+      fetchReviews();
+    }
+  }, [fetchAnotherPageOfReview])
 
   useEffect(() => {
     const updateTheLikedAndDislikedMoviesInDB = async () => {
@@ -336,37 +366,57 @@ const MovieDetailsScreen = ({ navigation, route }) => {
             <Text style={styles.header}>Reviews</Text>
             {
               reviewsData && reviewsData.length > 0 ? (
-                <FlatList
-                  snapToInterval={screenDimensions.screenWidth * 0.9 + 10}
-                  showsHorizontalScrollIndicator={false}
-                  horizontal
-                  data={reviewsData}
-                  style={{
-                    height: 'auto'
-                  }}
-                  contentContainerStyle={{
-                    gap: 10,
-                    height: 'auto'
-                  }}
-                  decelerationRate={'fast'}
-                  ref={flatListRef}
-                  extraData={itemHeights}
-                  renderItem={({ item, index }) => {
-                    return (
-                      <View onLayout={(event) => {
-                        const { height } = event.nativeEvent.layout;
-                        setItemHeights(prevHeights => ({ ...prevHeights, [index]: height }));
-                      }}>
-                        <ReviewCard
-                          authorUsername={item.author_details.username}
-                          authorAvatar={item.author_details.avatar_path}
-                          userRating={item.author_details.rating}
-                          review={item.content}
-                        />
-                      </View>
-                    )
-                  }}
-                />
+                <View>
+                  <FlatList
+                    snapToInterval={screenDimensions.screenWidth * 0.9 + 10}
+                    showsHorizontalScrollIndicator={false}
+                    horizontal
+                    data={reviewsData}
+                    style={{
+                      height: 'auto'
+                    }}
+                    contentContainerStyle={{
+                      gap: 10,
+                      height: 'auto'
+                    }}
+                    decelerationRate={'fast'}
+                    ref={flatListRef}
+                    extraData={itemHeights}
+                    renderItem={({ item, index }) => {
+                      return (
+                        <View onLayout={(event) => {
+                          const { height } = event.nativeEvent.layout;
+                          setItemHeights(prevHeights => ({ ...prevHeights, [index]: height }));
+                        }}>
+                          <ReviewCard
+                            authorUsername={item.author_details.username}
+                            authorAvatar={item.author_details.avatar_path}
+                            userRating={item.author_details.rating}
+                            review={item.content}
+                          />
+                        </View>
+                      )
+                    }}
+                  />
+
+                  <View style={styles.reviewNavigatorControlContainer}>
+                    <MaterialCommunityIcons name='chevron-left' color={reviewPageNum === 1 ? 'gray' : COLOURS.orange} size={20} onPress={() => {
+                      if (fetchAnotherPageOfReview === false && reviewPageNum > 1) {
+                        setReviewPageNum(reviewPageNum - 1)
+                        flatListRef.current?.scrollToOffset({ offset: 0, animated: false })
+                        setFetchAnotherPageOfReview(true)
+                      }
+                      }}/>
+                    <Text style={{color: COLOURS.orange, fontSize: 20}}>{reviewPageNum}</Text>
+                    <MaterialCommunityIcons name='chevron-right' color={reviewPageNum === totalNumberOfReviewPages ? 'gray' : COLOURS.orange} size={20} onPress={() => {
+                      if (fetchAnotherPageOfReview === false && reviewPageNum < totalNumberOfReviewPages){
+                        setReviewPageNum(reviewPageNum + 1)
+                        flatListRef.current?.scrollToOffset({ offset: 0, animated: false })
+                        setFetchAnotherPageOfReview(true)
+                      }
+                      }}/>
+                  </View>
+                </View>
               ) : (
                 <Text style={{ color: 'white', fontSize: 20, alignSelf: 'center', fontFamily: 'Lato', marginTop: 20 }}>Oops! No Reviews Yet!</Text>
               )
@@ -521,5 +571,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'center',
     marginTop: 10
+  },
+
+  reviewNavigatorControlContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 100,
+    flexDirection: 'row'
   }
 })
