@@ -49,7 +49,7 @@
 </table>
 
 ## Installation
-[Download APK from Google Drive](https://drive.google.com/file/d/1JPYMHgvkblgLkPW5qetl5eRpsTwnSObf/view?usp=drive_link)
+[Download APK from Google Drive](https://drive.google.com/file/d/1enoDyrPfIOkGsJi6KY-HTWXymML0mLG7/view?usp=drive_link)
 
 ## Contact
 *Email:* adormantsakthi@gmail.com
