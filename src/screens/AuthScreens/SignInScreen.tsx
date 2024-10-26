@@ -1,4 +1,4 @@
-import { Animated, ImageBackground, SafeAreaView, StyleSheet, TouchableOpacity, View, TextInput, Text, ScrollView } from 'react-native'
+import { Animated, ImageBackground, SafeAreaView, StyleSheet, TouchableOpacity, View, TextInput, Text, ScrollView, Image } from 'react-native'
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { StatusBar } from 'expo-status-bar';
 import { COLOURS } from '../../theme/theme';
@@ -143,6 +143,9 @@ export default function SignInScreen({ navigation, route }) {
         <SafeAreaView style={styles.container}>
             <StatusBar style='auto' />
             <ImageBackground source={require('../../assets/background.png')} style={styles.background}>
+                <View style={{ position: 'absolute', alignSelf: 'center', marginTop: (1 - 0.45) * screenDimensions.screenHeight / 2 - 100, height: 100, width: 100, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 20 }}>
+                    <Image source={require('../../../assets/appIcon.png')} style={{ resizeMode: 'center' }} />
+                </View>
                 <Animated.View style={[styles.roundedContainer, { height: animatedHeight }]}>
                     {
                         <Animated.View style={[styles.signUpFields, { opacity: signUpFieldOpacity }]}>
@@ -207,7 +210,7 @@ export default function SignInScreen({ navigation, route }) {
                             </ScrollView>
                         </Animated.View>
                     }
-                    <View style={{height: 10}}/>
+                    <View style={{ height: 10 }} />
                 </Animated.View>
             </ImageBackground>
             <Snackbar

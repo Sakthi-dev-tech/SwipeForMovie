@@ -1,4 +1,4 @@
-import { Animated, ImageBackground, SafeAreaView, StyleSheet, TouchableOpacity, View, TextInput, Text, ScrollView } from 'react-native'
+import { Animated, ImageBackground, SafeAreaView, StyleSheet, TouchableOpacity, View, TextInput, Text, ScrollView, Image } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
 import { StatusBar } from 'expo-status-bar';
 import { COLOURS } from '../../theme/theme';
@@ -48,7 +48,7 @@ export default function SignUpScreen({ navigation, route }) {
                         setSnackBarMessage("Verification Email Sent! Please verify your account!")
                         setSnackBarVisible(true)
                     })
-    
+
                     await setDoc(
                         doc(collection(FIRESTORE, "userSettings"), user.uid),
                         {
@@ -56,7 +56,7 @@ export default function SignUpScreen({ navigation, route }) {
                             temperature: 0.70,
                         }
                     )
-                    
+
                     await setDoc(
                         doc(collection(FIRESTORE, "userInfo"), user.uid),
                         {
@@ -64,14 +64,14 @@ export default function SignUpScreen({ navigation, route }) {
                             email: email,
                         }
                     )
-    
+
                     await setDoc(
                         doc(collection(FIRESTORE, "userFollowing"), user.uid),
                         {
                             following: []
                         }
                     )
-    
+
                     const { data, error } = await supabase
                         .from('UsersMovieData')
                         .insert([
@@ -140,6 +140,9 @@ export default function SignUpScreen({ navigation, route }) {
         <SafeAreaView style={styles.container}>
             <StatusBar style='auto' />
             <ImageBackground source={require('../../assets/background.png')} style={styles.background}>
+                <View style={{ position: 'absolute', alignSelf: 'center', marginTop: (1 - 0.45) * screenDimensions.screenHeight / 2 - 100, height: 100, width: 100, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: 20 }}>
+                    <Image source={require('../../../assets/appIcon.png')} style={{ resizeMode: 'center' }} />
+                </View>
                 <Animated.View style={[styles.roundedContainer, { height: animatedHeight }]}>
                     {
                         <Animated.View style={[styles.signUpFields, { opacity: signUpFieldOpacity }]}>
@@ -217,13 +220,13 @@ export default function SignUpScreen({ navigation, route }) {
                     }
                 </Animated.View>
                 <Snackbar
-                visible={snackBarVisible}
-                onDismiss={() => setSnackBarVisible(false)}
-                duration={2000}
-                style={{backgroundColor: COLOURS.settingsBackgroud}}
-            >
-                <Text style={{color: COLOURS.orange}}>{snackBarMessage}</Text>
-            </Snackbar>
+                    visible={snackBarVisible}
+                    onDismiss={() => setSnackBarVisible(false)}
+                    duration={2000}
+                    style={{ backgroundColor: COLOURS.settingsBackgroud }}
+                >
+                    <Text style={{ color: COLOURS.orange }}>{snackBarMessage}</Text>
+                </Snackbar>
             </ImageBackground>
         </SafeAreaView>
     )
